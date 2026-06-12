@@ -63,6 +63,9 @@ DEUTERON_P_TAG = ClusterChannel(
 DEUTERON_N_TAG = ClusterChannel(
     "d: DIS on proton, neutron spectator (control)", 2, 1, "n", 1, 0,
     2.2246e-3, l_wave=0)
+HE3_P_TAG = ClusterChannel(
+    "3He: p spectator (p+d two-body approx., control)", 3, 2, "p", 1, 1,
+    5.49e-3, l_wave=0)
 LI6_ALPHA_TAG = ClusterChannel(
     "6Li: DIS on d-cluster, alpha spectator", 6, 3, "alpha", 4, 2,
     1.4743e-3, l_wave=0)

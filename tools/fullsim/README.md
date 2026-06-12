@@ -13,6 +13,12 @@ every output directory.
 `./eic-shell` now starts the new container. Re-run the gun scan in it
 (epic-26.06 far-forward geometry) before quoting acceptance numbers.
 
+**Known issue (found 2026-06-12):** the `eic_xl-nightly` pyHepMC3
+`rootIO.ReaderRootTree` **segfaults** on files the legacy container reads
+fine — use `jug_xl-nightly.sif` for all HepMC3 tree.root *reading*
+(dump_spectators.py); npsim/eicrecon in the new container are unaffected.
+Consider reporting upstream (eic-shell / pyHepMC3 bindings).
+
 Inside the legacy container, source the geometry with:
 ```bash
 source /opt/detector/epic-24.07.0/setup.sh   # sets $DETECTOR_PATH
