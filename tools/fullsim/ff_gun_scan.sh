@@ -13,7 +13,12 @@ for s in /opt/detector/epic-main/bin/thisepic.sh /opt/detector/setup.sh \
     [ -f "$s" ] && { source "$s"; break; }
 done
 echo "DETECTOR_PATH=$DETECTOR_PATH"
-XML="$DETECTOR_PATH/epic_craterlake.xml"
+# IMPORTANT: plain epic_craterlake.xml defaults to the 5x41 beamline
+# fields; the rigidity-scan momenta below assume the 275-GeV-proton
+# optics, so use the 18x275 configuration explicitly.
+XML="$DETECTOR_PATH/epic_craterlake_18x275.xml"
+[ -f "$XML" ] || XML="$DETECTOR_PATH/epic_craterlake.xml"
+echo "using $XML"
 
 # tag  particle  p_total[GeV]  comment (R = p/(Z*275))
 CONFIGS="

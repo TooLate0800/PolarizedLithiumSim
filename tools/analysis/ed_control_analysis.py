@@ -102,7 +102,8 @@ def main():
 
     fig, axes = plt.subplots(1, 3, figsize=(13, 3.8))
     axes[0].hist(pt, bins=80, range=(0, 0.8), density=True, histtype="step",
-                 color="black", label="BeAGLE eH2 'en' (official)")
+                 color="black",
+                 label=f"BeAGLE e+{args.beam} (official sample)")
     axes[0].hist(kin["pT"], bins=80, range=(0, 0.8), density=True,
                  histtype="step", color="crimson",
                  label=f"Hulthen cluster model (beta={args.beta:g})")

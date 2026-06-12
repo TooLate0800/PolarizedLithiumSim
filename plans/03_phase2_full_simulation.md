@@ -124,9 +124,14 @@ the only Li far-forward datapoint is coherent J/ψ at IR-8, arXiv:2511.05638,
   both optics settings; this number decides whether the d-cluster tagging
   argument holds at IP6, needs the IR-8 secondary focus (RPs at 44–45.5 m
   recover R≈1 down to pT ~ 0), or relies on the ⁶Li → p/³He channels.
-- **Tritons are invisible at IP6** (R>1 bends less than beam, no detector):
-  the α+t double-tag of ⁷Li is *not* available at IP6 — document for the
-  second-detector/IR-8 case.
+- **Tritons at IP6 — revisit!** ◐ *2026-06-12 gun-scan finding
+  (tools/fullsim/README.md): in the current epic-main geometry the
+  over-rigid triton (R = 1.286) crosses the Roman-Pot planes ~36 mm on
+  the inner (over-rigid) side of the beam orbit and then deposits in the
+  ZDC — the "no coverage" assumption from the rigidity-window picture
+  may be wrong. Verify with beam-envelope (10σ) modeling, divergence,
+  and reconstruction before counting on the α+t double-tag at IP6;
+  IR-8 remains the clean solution.*
 - ZDC neutron tagging (evaporation n from both isotopes) + de-excitation γ.
 
 Work plan: (1) particle-gun (x_L, pT, vertex) scans per fragment per beam

@@ -47,11 +47,40 @@ craterlake fields (18×275 ep optics) reproduces the Li-fragment cases:
 | deuteron_R0857 | d | 235.7 | 0.857 | Roman Pots |
 | neutron_ZDC | n | 117.9 | — | ZDC |
 
-Caveats: single-particle, fixed vertex at the origin, fixed direction
-(no beam divergence/vertex spread), legacy 24.07 geometry, and the
-fields are the *proton* 18×275 optics — a Li-rigidity beamline XML is
-the real Phase-2 item (plans/03 step 2.1.2). This scan validates the
-*routing logic*, not the final acceptance numbers.
+**Results (2026-06-12, epic-main geometry, 18×275 fields, 12 ev/config —
+fraction of events with ≥1 hit):**
+
+| config | RP | OMD | B0 | ZDC | verdict vs prediction |
+|---|---|---|---|---|---|
+| alpha_R0857 | **1.00** | 0 | 0 | 0.17 | ✓ RP (⁷Li α-tag works) |
+| alpha_R100 | 0.08 | 0 | 0 | 0 | ✓ invisible (⁶Li α beam-blind) |
+| alpha_R100pt3 | **1.00** | 0 | 0 | 0 | ✓ pT-tail recovers it |
+| deuteron_R0857 | **1.00** | 0 | 0 | 0.25 | ✓ RP |
+| proton_R050 | 0.25 | **1.00** | 0 | 0.42 | ✓ OMD (RP/ZDC = pass-through/splash) |
+| triton_R1286 | **1.00** | 0 | 0 | **1.00** | ✗ **surprise: taggable!** |
+| neutron_ZDC | 0 | 0 | 0 | **1.00** | ✓ ZDC |
+
+Findings beyond the table:
+- Current epic-main RP stations sit at **z ≈ 32.5 / 34.3 m** (papers
+  quote 26/28 m — geometry has moved; update plans/03 numbers when the
+  preTDR layout is confirmed).
+- Hit x-positions: α(R=0.857) crosses ~40 mm on the dispersion side of
+  the beam orbit; the **over-rigid triton (R=1.286) crosses ~36 mm on
+  the opposite side of the *same* RP planes and then deposits in the
+  ZDC** (it bends less than the beam, staying near the zero-degree
+  line). The "no IP6 triton coverage" assumption may be wrong — the
+  ⁷Li α+t double-tag could work with RP-inner-side tracking + ZDC
+  energy. Needs: 10σ beam-exclusion modeling, divergence/vertex spread,
+  reconstruction-level confirmation.
+- Gotcha encoded in the script: plain `epic_craterlake.xml` loads the
+  **5×41 beamline fields** — with the 275-optics momenta everything
+  flies straight to the ZDC. Use `epic_craterlake_18x275.xml`.
+- `epic_craterlake_18x110_Au.xml` (Z/A ≈ 0.40) is the closest existing
+  optics proxy for a ⁷Li beam (Z/A = 0.429).
+
+Caveats: single-particle, fixed vertex/direction (no beam envelope —
+real pots retract to 10σ), hit-level only. This validates *routing
+logic*, not final acceptances (plans/03 step 2.2 proper).
 
 ## e+d control inputs (plan 1.5.3)
 
