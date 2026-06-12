@@ -64,13 +64,17 @@ Findings beyond the table:
 - Current epic-main RP stations sit at **z ≈ 32.5 / 34.3 m** (papers
   quote 26/28 m — geometry has moved; update plans/03 numbers when the
   preTDR layout is confirmed).
-- Hit x-positions: α(R=0.857) crosses ~40 mm on the dispersion side of
-  the beam orbit; the **over-rigid triton (R=1.286) crosses ~36 mm on
-  the opposite side of the *same* RP planes and then deposits in the
-  ZDC** (it bends less than the beam, staying near the zero-degree
-  line). The "no IP6 triton coverage" assumption may be wrong — the
-  ⁷Li α+t double-tag could work with RP-inner-side tracking + ZDC
-  energy. Needs: 10σ beam-exclusion modeling, divergence/vertex spread,
+- Offsets from the *measured* 275-GeV orbit (reference-proton gun,
+  station-2 plane z ≈ 34.2 m, orbit x = −1212 mm): α(R=0.857) at
+  **−48 mm** (dispersion side — outside a 10σ ≈ 18–36 mm exclusion for
+  both optics ⇒ ⁷Li α-tag is envelope-safe); **triton (R=1.286) at
+  +77 mm on the over-rigid side** of the same RP planes, then deposits
+  in the ZDC (bends less than the beam) — far outside any beam
+  envelope ⇒ the "no IP6 triton coverage" assumption looks wrong and
+  the ⁷Li α+t double-tag may work via RP-inner-side tracking + ZDC
+  energy. α(R=1.0) grazes at −15 mm ⇒ inside/marginal vs 10σ ⇒
+  beam-blind, as predicted. Pending: divergence/vertex spread, whether
+  the inner half is actually instrumented in the real pots, and
   reconstruction-level confirmation.
 - Gotcha encoded in the script: plain `epic_craterlake.xml` loads the
   **5×41 beamline fields** — with the 275-optics momenta everything

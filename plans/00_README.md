@@ -46,6 +46,24 @@ brings to the EIC, in support of the ANL polarized ⁶,⁷Li ion-source program
 5. **Calendar anchor**: INT program on polarized ion beams at EIC,
    March 22 – April 2, 2027 — target for Phase-1 money plots.
 
+## Development run 2 (2026-06-12, autonomous; commits abd2bce…)
+
+- ☑ Money plots on real PDF grids (CT18/NNPDFpol): gluonometry 5σ at
+  Δ/F₁=10⁻³ within 25–37 fb⁻¹/u; conclusions stable vs toys.
+- ☑ Control studies on **official BeAGLE samples** (xrootd-streamed):
+  routing validated at all three regions — e+d p→OMD 96.6%, e+d n→ZDC
+  99.2%, e+³He p→RP 99.8%; BeAGLE pT tails 2–13× harder than the cluster
+  model ⇒ R≈1 tag acceptances are model-dominated (the ⁶Li α-tag number).
+- ☑ Far-forward gun scan in **current epic-main geometry** (18×275
+  fields): routing table confirmed by Geant4; RP stations now at
+  z=32.5/34.3 m; **discovery — the "no-coverage" triton (R=1.286)
+  crosses the RP planes on the over-rigid side + showers in the ZDC ⇒
+  the ⁷Li α+t double-tag may work at IP6** (10σ/reco check pending).
+- ☑ Container refreshed (eic_xl, EICrecon v1.38.0); known issue: its
+  pyHepMC3 rootIO segfaults — HepMC3 reading stays on the legacy image.
+- ❌ Showstopper for local BeAGLE generation: **FLUKA license** (user
+  registration at fluka.org) — everything else is built and validated.
+
 ## Current status (2026-06-12, end of first development sprint)
 
 - ☑ Source docs digested; verified findings + benchmarks table in 01.
