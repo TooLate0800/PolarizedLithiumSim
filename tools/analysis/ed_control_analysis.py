@@ -36,11 +36,11 @@ def load(csv_path):
     return raw, kinds
 
 
-def spectator_protons(raw, kinds):
-    """Per event: beam axis from 'B' row; spectator = proton with largest
-    pz; returns (pT_rel, xL, R, theta) arrays."""
+def spectator_protons(raw, kinds, pdg=2212):
+    """Per event: beam axis from 'B' row; spectator = baryon (given pdg)
+    with largest pz; returns (pT_rel, xL, R, theta) arrays."""
     beams = raw[kinds == "B"]
-    prot = raw[(kinds == "S") & (raw["pdg"] == 2212)]
+    prot = raw[(kinds == "S") & (raw["pdg"] == pdg)]
     beam_by_evt = {int(b["ievt"]): b for b in beams}
     best = {}
     for p in prot:
@@ -75,19 +75,23 @@ def main():
     ap.add_argument("--outdir", default="fastsim/out")
     ap.add_argument("--beta", type=float, default=0.26,
                     help="Hulthen short-range scale for the model overlay")
+    ap.add_argument("--spectator", default="p", choices=["p", "n"])
     args = ap.parse_args()
     outdir = pathlib.Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
+    pdg = 2212 if args.spectator == "p" else 2112
+    channel = (sp.DEUTERON_P_TAG if args.spectator == "p"
+               else sp.DEUTERON_N_TAG)
     raw, kinds = load(args.csv)
-    pt, xl, rr, th = spectator_protons(raw, kinds)
+    pt, xl, rr, th = spectator_protons(raw, kinds, pdg=pdg)
     n_evt = len(set(raw["ievt"].astype(int)))
     lines = [f"# e+d control: {args.csv}",
-             f"events: {n_evt}, spectator-proton candidates: {len(pt)} "
-             f"({len(pt)/max(n_evt,1):.1%} of events)"]
+             f"events: {n_evt}, spectator-{args.spectator} candidates: "
+             f"{len(pt)} ({len(pt)/max(n_evt,1):.1%} of events)"]
 
-    # model: deuteron Hulthen, proton spectator, beam 130 GeV/u
-    kin = sp.spectator_lab_kinematics(sp.DEUTERON_P_TAG, 130.0, 300000,
+    # model: deuteron Hulthen spectator, beam 130 GeV/u
+    kin = sp.spectator_lab_kinematics(channel, 130.0, 300000,
                                       beta=args.beta)
 
     fig, axes = plt.subplots(1, 3, figsize=(13, 3.8))
@@ -104,25 +108,41 @@ def main():
     axes[1].hist(kin["xL"], bins=80, range=(0.7, 1.3), density=True,
                  histtype="step", color="crimson")
     axes[1].set_xlabel(r"$x_L = p_\parallel / p_{beam/u}$")
-    axes[2].hist(rr, bins=80, range=(0.35, 0.65), density=True,
-                 histtype="step", color="black")
-    axes[2].hist(kin["R"], bins=80, range=(0.35, 0.65), density=True,
-                 histtype="step", color="crimson")
-    for lo, hi, c in ((*ff.OMD_R_WINDOW, "orange"), (*ff.RP_R_WINDOW, "g")):
-        axes[2].axvspan(lo, hi, alpha=0.12, color=c)
-    axes[2].set_xlabel("rigidity ratio R (d beam)")
-    fig.suptitle("e+d spectator-proton control: official BeAGLE vs cluster "
-                 "model (10x130, afterburned)", fontsize=10)
+    if args.spectator == "p":
+        axes[2].hist(rr, bins=80, range=(0.35, 0.65), density=True,
+                     histtype="step", color="black")
+        axes[2].hist(kin["R"], bins=80, range=(0.35, 0.65), density=True,
+                     histtype="step", color="crimson")
+        for lo, hi, c in ((*ff.OMD_R_WINDOW, "orange"),
+                          (*ff.RP_R_WINDOW, "g")):
+            axes[2].axvspan(lo, hi, alpha=0.12, color=c)
+        axes[2].set_xlabel("rigidity ratio R (d beam)")
+    else:
+        axes[2].hist(th * 1e3, bins=80, range=(0, 6), density=True,
+                     histtype="step", color="black")
+        axes[2].hist(kin["theta"] * 1e3, bins=80, range=(0, 6),
+                     density=True, histtype="step", color="crimson")
+        axes[2].axvline(ff.THETA_ZDC_MAX * 1e3, color="gray", ls="--")
+        axes[2].set_xlabel(r"$\theta$ w.r.t. ion axis [mrad] (ZDC window)")
+    fig.suptitle(f"e+d spectator-{args.spectator} control: official BeAGLE "
+                 "vs cluster model (10x130, afterburned)", fontsize=10)
     fig.tight_layout()
-    fig.savefig(outdir / "ed_control_spectra.png", dpi=140)
+    fig.savefig(outdir / f"ed_control_spectra_{args.spectator}.png", dpi=140)
 
-    for name, (R, T, P) in (("BeAGLE", (rr, th, pt)),
-                            ("model", (kin["R"], kin["theta"], kin["pT"]))):
-        for optics in (ff.HIGH_ACCEPTANCE, ff.HIGH_DIVERGENCE):
-            acc = ff.acceptance_summary(R, T, P, optics)
-            parts = "  ".join(f"{k}:{v:6.3f}" for k, v in acc.items()
-                              if v > 5e-4)
-            lines.append(f"{name:7s} {optics.name:16s} {parts}")
+    if args.spectator == "p":
+        pairs = (("BeAGLE", (rr, th, pt)),
+                 ("model", (kin["R"], kin["theta"], kin["pT"])))
+        for name, (R, T, P) in pairs:
+            for optics in (ff.HIGH_ACCEPTANCE, ff.HIGH_DIVERGENCE):
+                acc = ff.acceptance_summary(R, T, P, optics)
+                parts = "  ".join(f"{k}:{v:6.3f}" for k, v in acc.items()
+                                  if v > 5e-4)
+                lines.append(f"{name:7s} {optics.name:16s} {parts}")
+    else:
+        for name, T in (("BeAGLE", th), ("model", kin["theta"])):
+            acc = ff.neutral_summary(T)
+            lines.append(f"{name:7s} ZDC:{acc['ZDC']:6.3f}  "
+                         f"lost:{acc['lost']:6.3f}")
     # quantitative tail comparison
     for cut in (0.1, 0.2, 0.3, 0.45):
         fb = float(np.mean(pt > cut))

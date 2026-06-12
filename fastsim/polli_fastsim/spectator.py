@@ -60,6 +60,9 @@ class ClusterChannel:
 DEUTERON_P_TAG = ClusterChannel(
     "d: DIS on neutron, proton spectator (control)", 2, 1, "p", 1, 1,
     2.2246e-3, l_wave=0)
+DEUTERON_N_TAG = ClusterChannel(
+    "d: DIS on proton, neutron spectator (control)", 2, 1, "n", 1, 0,
+    2.2246e-3, l_wave=0)
 LI6_ALPHA_TAG = ClusterChannel(
     "6Li: DIS on d-cluster, alpha spectator", 6, 3, "alpha", 4, 2,
     1.4743e-3, l_wave=0)
@@ -121,12 +124,15 @@ def spectator_lab_kinematics(channel, p_per_nucleon, n=200_000, beta=0.30,
     p_lab = np.sqrt(pt * pt + pz_lab * pz_lab)
     theta = np.arctan2(pt, pz_lab)
     rigidity_beam = p_beam / channel.beam_Z
-    rigidity_spec = p_lab / channel.spectator_Z
+    if channel.spectator_Z > 0:
+        rig_ratio = (p_lab / channel.spectator_Z) / rigidity_beam
+    else:
+        rig_ratio = np.full_like(p_lab, np.nan)  # neutral: no rigidity
     return {
         "pT": pt,
         "theta": theta,
         "p_lab": p_lab,
-        "R": rigidity_spec / rigidity_beam,
+        "R": rig_ratio,
         "xL": p_lab / (channel.spectator_A * p_per_nucleon),
         "k": np.sqrt(kx**2 + ky**2 + kz**2),
     }

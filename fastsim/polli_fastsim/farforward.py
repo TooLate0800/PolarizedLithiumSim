@@ -67,6 +67,20 @@ ROUTE_LABELS = {0: "lost", 1: "RomanPots", 2: "OMD", 3: "B0",
                 4: "RP (pT tail, R~1)"}
 
 
+def route_neutral(theta):
+    """Neutral fragments: ZDC inside THETA_ZDC_MAX, else lost (B0 EMCal
+    photons not modeled here). Returns 5 for ZDC, 0 for lost."""
+    theta = np.asarray(theta, dtype=float)
+    return np.where(theta <= THETA_ZDC_MAX, 5, 0)
+
+
+def neutral_summary(theta):
+    route = route_neutral(theta)
+    n = float(len(route))
+    return {"ZDC": float(np.sum(route == 5)) / n,
+            "lost": float(np.sum(route == 0)) / n}
+
+
 def acceptance_summary(R, theta, pT, optics=HIGH_ACCEPTANCE):
     """Fraction of spectators in each far-forward system."""
     route = route_charged(R, theta, pT, optics)
