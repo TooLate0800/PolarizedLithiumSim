@@ -165,6 +165,13 @@ need analogous care.
 3. **Validation for A=6,7 — mandatory, not optional.**
    - e+d control: reproduce the published BeAGLE e+d tagging distributions
      (Tu et al. 2005.14706) with our setup before touching Li.
+     ◐ *2026-06-12 first pass on the official BeAGLE eH2 'en' 10×130
+     sample (50k events streamed via xrootd; `tools/analysis/`):
+     spectator-proton routing confirmed — 96.6% OMD (cluster model:
+     98.1%), x_L and pT bulk agree with the Hulthén model, but BeAGLE's
+     pT tail is 2.2× (pT>0.2) to 13× (pT>0.45) harder ⇒ near-beam (R≈1)
+     tag acceptances are tail-model-dependent at the O(10) level — the
+     ⁶Li α-tag number needs VMC/BeAGLE input, as suspected.*
    - Fragment yields (α, t, d, ³He, p, n, residues with E*) vs
      photo-/electro-disintegration data and cluster-model expectations
      (⁷Li → α+t dominance at low E*); event-by-event momentum conservation.

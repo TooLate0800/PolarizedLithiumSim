@@ -57,6 +57,9 @@ class ClusterChannel:
         return np.sqrt(2.0 * mu * self.separation_energy)
 
 
+DEUTERON_P_TAG = ClusterChannel(
+    "d: DIS on neutron, proton spectator (control)", 2, 1, "p", 1, 1,
+    2.2246e-3, l_wave=0)
 LI6_ALPHA_TAG = ClusterChannel(
     "6Li: DIS on d-cluster, alpha spectator", 6, 3, "alpha", 4, 2,
     1.4743e-3, l_wave=0)
