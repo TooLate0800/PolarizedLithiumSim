@@ -17,23 +17,26 @@ import numpy as np
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 from polli_fastsim import beams, fom
-from polli_fastsim.polarized import (ToyG1, cbt_polarized_emc_ratio,
+from polli_fastsim.inputs import get_backends
+from polli_fastsim.polarized import (cbt_polarized_emc_ratio,
                                      tmt_polarized_emc_ratio, toy_b1,
                                      toy_delta_gluon)
+from polli_fastsim.structure import NuclearF2
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
-def delta_dr_per_x(ion_name, lumi, min_events=100):
+def delta_dr_per_x(ion_name, lumi, backends, min_events=100):
     """Combined-over-(Q2, energies) statistical error on DR vs x."""
-    g1m = ToyG1()
+    g1m = backends["g1"]
     inv2_tot = None
     x_centers = None
     for cfg in beams.default_configs(ion_name):
         sc = fom.Scenario(lumi_fb_per_nucleon=lumi)
-        proj = fom.project_rates(cfg, sc)
+        proj = fom.project_rates(
+            cfg, sc, nuclear_f2=NuclearF2(cfg.ion, base=backends["base"]))
         obs = fom.project_observables(cfg, sc, proj, g1m, toy_b1,
                                       toy_delta_gluon)
         x_centers = proj.x[:, 0]
@@ -54,10 +57,12 @@ def delta_dr_per_x(ion_name, lumi, min_events=100):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ion", default="7Li", choices=["6Li", "7Li"])
+    ap.add_argument("--pdf", default="toy", choices=["toy", "grid"])
     ap.add_argument("--outdir", default="out")
     args = ap.parse_args()
     outdir = pathlib.Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
+    backends = get_backends(args.pdf)
 
     xs = np.logspace(np.log10(0.005), np.log10(0.9), 300)
     fig, (ax, ax2) = plt.subplots(
@@ -71,7 +76,7 @@ def main():
 
     sep = np.abs(cbt_polarized_emc_ratio(xs) - tmt_polarized_emc_ratio(xs))
     for lumi, color, dx in ((10.0, "black", 1.0), (100.0, "seagreen", 1.04)):
-        x_c, err = delta_dr_per_x(args.ion, lumi)
+        x_c, err = delta_dr_per_x(args.ion, lumi, backends)
         ok = np.isfinite(err) & (x_c > 0.004) & (x_c < 0.9) & (err < 0.5)
         mid = 0.5 * (cbt_polarized_emc_ratio(x_c[ok])
                      + tmt_polarized_emc_ratio(x_c[ok]))
@@ -88,8 +93,8 @@ def main():
     ax.set_ylabel(r"$\Delta R(x) = g_1^A/(P_p g_1^p + P_n g_1^n)$")
     ax.set_title(
         f"Polarized EMC effect, {args.ion}: scenario discrimination\n"
-        "(3 energy settings combined; $P_e$=0.7, $P_z$=0.7; "
-        "stat. only; TOY inputs)", fontsize=10)
+        f"(3 energy settings combined; $P_e$=0.7, $P_z$=0.7; "
+        f"stat. only; {backends['tag'].upper()} inputs)", fontsize=10)
     ax.legend(fontsize=8, loc="lower left")
     ax2.axhline(5, color="gray", ls=":", lw=1)
     ax2.set_yscale("log")
@@ -97,10 +102,10 @@ def main():
     ax2.set_ylabel(r"$|\Delta R_{CBT}-\Delta R_{TMT}|/\delta$")
     ax2.legend(fontsize=8)
     fig.tight_layout()
-    path = outdir / f"money_polemc_{args.ion}.png"
+    path = outdir / f"money_polemc_{args.ion}_{backends['tag']}.png"
     fig.savefig(path, dpi=150)
     print(f"wrote {path}")
-    x_c, err10 = delta_dr_per_x(args.ion, 10.0)
+    x_c, err10 = delta_dr_per_x(args.ion, 10.0, backends)
     for xq in (0.1, 0.3, 0.5, 0.7):
         i = np.argmin(np.abs(x_c - xq))
         print(f"  x={x_c[i]:.2f}: dDR(10/fb)={err10[i]:.4f}  "

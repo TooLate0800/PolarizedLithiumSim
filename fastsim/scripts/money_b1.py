@@ -18,9 +18,10 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 
 from polli_fastsim import beams, fom
 from polli_fastsim.asymmetries import azz as azz_formula
-from polli_fastsim.polarized import (ToyG1, b1_convolution,
-                                     b1_li6_from_deuteron, toy_b1,
-                                     toy_delta_gluon)
+from polli_fastsim.inputs import get_backends
+from polli_fastsim.polarized import (b1_convolution, b1_li6_from_deuteron,
+                                     toy_b1, toy_delta_gluon)
+from polli_fastsim.structure import NuclearF2
 
 import matplotlib
 matplotlib.use("Agg")
@@ -30,12 +31,14 @@ import matplotlib.pyplot as plt
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--lumi", type=float, default=10.0)
+    ap.add_argument("--pdf", default="toy", choices=["toy", "grid"])
     ap.add_argument("--outdir", default="out")
     args = ap.parse_args()
     outdir = pathlib.Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
-    g1m = ToyG1()
+    backends = get_backends(args.pdf)
+    g1m = backends["g1"]
     fig, ax = plt.subplots(figsize=(7, 5))
 
     # scenario Azz(x) curves at a representative Q2 slice (combined plot
@@ -45,8 +48,7 @@ def main():
     cfg0 = beams.default_configs("6Li")[0]
     s0 = cfg0.sqrt_s_per_nucleon**2
     y0 = np.clip(q2s / (s0 * xs), 1e-4, 1.0)
-    from polli_fastsim.structure import NuclearF2
-    nf2 = NuclearF2(cfg0.ion)
+    nf2 = NuclearF2(cfg0.ion, base=backends["base"])
     f1 = nf2.f1a(xs, q2s) / cfg0.ion.A
     f2 = nf2.f2a(xs, q2s) / cfg0.ion.A
     for b1f, color, label in (
@@ -62,7 +64,8 @@ def main():
         for cfg in beams.default_configs("6Li"):
             sc = fom.Scenario(lumi_fb_per_nucleon=args.lumi,
                               pol_ion_tensor=pzz)
-            proj = fom.project_rates(cfg, sc)
+            proj = fom.project_rates(
+                cfg, sc, nuclear_f2=NuclearF2(cfg.ion, base=backends["base"]))
             obs = fom.project_observables(cfg, sc, proj, g1m, toy_b1,
                                           toy_delta_gluon)
             x_c = proj.x[:, 0]
@@ -82,11 +85,11 @@ def main():
     ax.set_ylabel(r"$|A_{zz}|$  and  $\delta A_{zz}$")
     ax.set_ylim(1e-5, 0.3)
     ax.set_title("Tensor asymmetry on $^6$Li (embedded deuteron, "
-                 "$P_d$=0.87)\n3 energies combined; stat. only; TOY inputs",
-                 fontsize=10)
+                 "$P_d$=0.87)\n3 energies combined; stat. only; "
+                 f"{backends['tag'].upper()} inputs", fontsize=10)
     ax.legend(fontsize=8)
     fig.tight_layout()
-    path = outdir / "money_b1_6Li.png"
+    path = outdir / f"money_b1_6Li_{backends['tag']}.png"
     fig.savefig(path, dpi=150)
     print(f"wrote {path}")
 

@@ -43,10 +43,11 @@ yes | python3 -m parton install NNPDFpol11_100
   ⁶Li α-tag ≈ **3–9%** (high-acceptance optics; tail-dominated, ×3 model
   spread) collapsing to 1–2% with high-divergence optics; ⁷Li t-tag ~ 0.
 - **Gluonometry**: 5σ on Δ/F₁ = 10⁻³ (Sather–Schmidt scale) at
-  **~15–40 fb⁻¹/u** depending on P_zz and energy.
-- **Polarized EMC**: δΔR ≈ 3.5–8% per x-bin at 10 fb⁻¹/u (3 energies
-  combined); CBT-vs-TMT discrimination ≈ 5σ at x ≈ 0.5–0.7 with
-  100 fb⁻¹/u.
+  **~25–37 fb⁻¹/u** with CT18 grid inputs (15–22 with the toy F2) —
+  inside the plausible program either way.
+- **Polarized EMC**: δΔR ≈ 2.6–4% per x-bin at x = 0.3–0.5 at 10 fb⁻¹/u
+  (grid inputs, 3 energies combined; 12% at x = 0.7); CBT-vs-TMT
+  discrimination ≈ 5σ at x ≈ 0.5–0.7 with 100 fb⁻¹/u.
 - **b₁**: δA_zz ≈ 10⁻³-level per x-bin at 10 fb⁻¹/u, P_zz = 0.6–0.8.
 
 ## Big caveats (by design — see plans/02 steps 1.2–1.5)
