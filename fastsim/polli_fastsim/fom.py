@@ -120,3 +120,17 @@ def project_observables(config, scenario, proj, g1_model, b1_func, delta_func):
         out["sig_" + key] = sig
     proj.extras.update(out)
     return out
+
+
+def combine_over_q2(err_map, accepted, min_events=None, n_events=None):
+    """Combine per-(x,Q2)-bin errors into a per-x error:
+    delta_x = 1/sqrt(sum_q2 1/delta^2) over accepted bins."""
+    err_map = np.asarray(err_map, dtype=float)
+    use = np.asarray(accepted, dtype=bool)
+    if min_events is not None and n_events is not None:
+        use = use & (np.asarray(n_events) >= min_events)
+    inv2 = np.where(use & (err_map > 0), 1.0 / err_map**2, 0.0)
+    tot = inv2.sum(axis=1)
+    out = np.full(tot.shape, np.inf)
+    np.divide(1.0, np.sqrt(tot), out=out, where=tot > 0)
+    return out

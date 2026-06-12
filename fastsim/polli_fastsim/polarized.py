@@ -51,25 +51,93 @@ class ToyG1:
         return g1
 
 
-def toy_polarized_emc_ratio(x):
-    """TOY stand-in for the Cloet-Bentz-Thomas polarized-EMC ratio DR(x).
-
-    CBT predict the polarized EMC effect to be ~2x the unpolarized one in
-    the valence region (ratio dipping to ~0.8 around x~0.6-0.7 for 7Li).
-    Shape below is qualitative only -- digitize the published curve for
-    real projections.
+class PartonG1(ToyG1):
+    """LO g1 from a polarized LHAPDF grid via `parton` (default
+    NNPDFpol11_100): g1 = (1/2) sum_q e_q^2 [Dq + Dqbar]; neutron by
+    isospin. Unpolarized denominator (F1) still comes from `base`.
+    Install:  yes | python3 -m parton install NNPDFpol11_100
     """
-    x = np.asarray(x, dtype=float)
-    return 1.0 - 0.25 * np.power(x, 1.5) * np.exp(-2.0 * (x - 0.75) ** 2)
+
+    _E2 = {1: 1 / 9, 2: 4 / 9, 3: 1 / 9}
+
+    def __init__(self, base=None, setname="NNPDFpol11_100", member=0):
+        super().__init__(base=base)
+        from parton import mkPDF  # lazy: optional dependency
+        self._pol = mkPDF(setname, member)
+
+    def _g1_scalar(self, x, q2, swap_ud):
+        if not (0.0 < x < 1.0):
+            return 0.0
+        tot = 0.0
+        for pid, e2 in self._E2.items():
+            if swap_ud and pid in (1, 2):
+                e2 = self._E2[3 - pid]
+            tot += e2 * (self._pol.xfxQ2(pid, x, q2)
+                         + self._pol.xfxQ2(-pid, x, q2))
+        return 0.5 * tot / x  # xfxQ2 returns x*Dq
+
+    def g1p(self, x, q2):
+        return np.vectorize(lambda a, b: self._g1_scalar(a, b, False))(
+            np.asarray(x, dtype=float), np.asarray(q2, dtype=float))
+
+    def g1n(self, x, q2):
+        return np.vectorize(lambda a, b: self._g1_scalar(a, b, True))(
+            np.asarray(x, dtype=float), np.asarray(q2, dtype=float))
+
+
+def unpolarized_emc_ratio(x):
+    """Qualitative unpolarized EMC ratio R_EMC(x) for a light nucleus:
+    shadowing dip, anti-shadowing bump ~1.01 at x~0.1, valence dip ~0.88
+    at x~0.7, Fermi rise beyond. Smooth interpolation of the canonical
+    shape (SCENARIO; replace with EPPS21 / data fits in step 1.2)."""
+    xs = np.array([1e-4, 0.01, 0.06, 0.10, 0.20, 0.30, 0.45, 0.60,
+                   0.70, 0.80, 0.88, 0.95])
+    rs = np.array([0.96, 0.98, 1.00, 1.01, 1.00, 0.98, 0.95, 0.91,
+                   0.88, 0.90, 1.00, 1.15])
+    return np.interp(np.asarray(x, dtype=float), xs, rs)
+
+
+def cbt_polarized_emc_ratio(x):
+    """Cloet-Bentz-Thomas-like scenario: polarized EMC effect ~2x the
+    unpolarized one (verbatim claim of PLB 642:210; curve shape here is
+    qualitative -- digitize the published figure before publication)."""
+    return 1.0 - 2.0 * (1.0 - unpolarized_emc_ratio(x))
+
+
+def tmt_polarized_emc_ratio(x):
+    """Tronchin-Matevosyan-Thomas-like scenario (PLB 783:247): polarized
+    EMC effect comparable to the unpolarized one."""
+    return unpolarized_emc_ratio(x)
+
+
+def toy_polarized_emc_ratio(x):
+    """Backward-compatible alias for the CBT-like scenario."""
+    return cbt_polarized_emc_ratio(x)
 
 
 def toy_b1(x, q2, f1):
-    """TOY b1 with HERMES-like magnitude: ~ +1e-2*F1 at x~0.01 crossing
-    zero near x~0.3-0.45 (cf. HERMES PRL 95:242001). Returns b1 (absolute).
+    """SCENARIO b1 'HERMES-like': large at low x (b1 ~ 0.1 at x ~ 0.01,
+    cf. HERMES PRL 95:242001), zero crossing near x ~ 0.2, small negative
+    at high x (Miller pion + hidden-color shape). Returns b1 (absolute).
     """
     x = np.asarray(x, dtype=float)
-    shape = 0.01 * np.power(np.maximum(x, 1e-6), -0.2) * (1.0 - x / 0.35)
+    shape = 0.01 * np.power(np.maximum(x, 1e-6), -0.2) * (1.0 - x / 0.20)
     return shape * np.exp(-3.0 * x) * f1
+
+
+def b1_convolution(x, q2, f1):
+    """SCENARIO b1 'standard convolution': an order of magnitude below the
+    HERMES-like curve at x > 0.2 (Cosyn-Dong-Kumano-Sargsian PRD 95:074036
+    find |b1| < 1e-3 there). Same zero-crossing structure."""
+    return 0.1 * toy_b1(x, q2, f1)
+
+
+def b1_li6_from_deuteron(b1_d, p_d_cluster=0.87):
+    """Embedded-deuteron scaling for whole-nucleus 6Li b1:
+    b1(6Li) ~ P_d * b1(d) for the d-cluster contribution (our inference --
+    no published 6Li b1 exists; see plans/04 item 9). Per-nucleon
+    normalization adds the 2/6 dilution where needed."""
+    return p_d_cluster * b1_d
 
 
 def toy_delta_gluon(x, q2, f1, scale=1e-3):

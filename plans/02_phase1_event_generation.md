@@ -54,7 +54,12 @@ Done in this session: `fastsim/polli_fastsim` (tested, 6/6 passing).
    Realizing the Program with Polarized Ion Beams at EIC",
    **March 22 – April 2, 2027**.
 
-## Step 1.2 ☐ Replace toy structure functions (1–2 weeks)
+## Step 1.2 ◐ Replace toy structure functions (1–2 weeks)
+
+*2026-06-12: grid backends wired and validated — `PartonF2` (CT18NLO) and
+`PartonG1` (NNPDFpol11_100) via the `parton` package; toy F2 certified to
+±40% (`scripts/validate_inputs.py`). Scenario curves added: CBT 2× / TMT 1×
+polarized-EMC, HERMES-like vs convolution b1. Remaining below.*
 
 1. Unpolarized: LHAPDF inside eic-shell (container ships LHAPDF6) or the
    pure-python `parton` package locally; CT18NNLO + EPPS21/nNNPDF3.0 nuclear
@@ -81,7 +86,14 @@ Done in this session: `fastsim/polli_fastsim` (tested, 6/6 passing).
 **Deliverable:** updated FOM maps with credible central curves and scenario
 bands; a short note fixing the input set.
 
-## Step 1.3 ☐ Inclusive figure-of-merit study (2–3 weeks)
+## Step 1.3 ◐ Inclusive figure-of-merit study (2–3 weeks)
+
+*2026-06-12: first versions of all three money plots exist
+(`scripts/money_{polemc,b1,delta}.py`) with the error estimators validated
+by toy-MC closure (`tests/test_closure.py`). First numbers: gluonometry
+5σ at Δ/F₁=10⁻³ needs ~15–40 fb⁻¹/u; CBT-vs-TMT ≈5σ at x≈0.5–0.7 with
+100 fb⁻¹/u; δA_zz ~ 10⁻³/x-bin at 10 fb⁻¹/u. To finalize: rerun on grid
+inputs + adopted binning, add the items below.*
 
 For each observable, produce the "money plots":
 1. **Polarized EMC (⁷Li first):** projected δ(ΔR(x)) vs x for the energy
@@ -113,7 +125,14 @@ multiplicative RC-uncertainty band on the FOMs, and a decision whether
 Phase-2 needs full RC treatment (note: RC on tensor A_zz/cos 2φ is
 uncharted — flag to theory colleagues).
 
-## Step 1.5 ☐ BeAGLE e+Li breakup & tagging study (4–6 weeks, core novelty)
+## Step 1.5 ◐ BeAGLE e+Li breakup & tagging study (4–6 weeks, core novelty)
+
+*2026-06-12: the cluster-IA seed (item 3 cross-check + item 4 routing) is
+implemented (`polli_fastsim/spectator.py`, `farforward.py`,
+`scripts/tagging_acceptance.py`): ⁷Li α-tag 96–99% into RP; ⁶Li α-tag
+3–9% at IP6 (tail-dominated, the quantitative beam-blindness statement);
+⁷Li t-tag ~0. BeAGLE itself (items 1–2, evaporation backgrounds, purity)
+still todo — access is the long pole.*
 
 The proposal's explicit ask: charged-α and neutral-fragment tagging purity.
 BeAGLE (arXiv:2204.11998) is the only breakup-capable eA generator; it runs

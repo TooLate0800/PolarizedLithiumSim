@@ -46,12 +46,16 @@ brings to the EIC, in support of the ANL polarized ⁶,⁷Li ion-source program
 5. **Calendar anchor**: INT program on polarized ion beams at EIC,
    March 22 – April 2, 2027 — target for Phase-1 money plots.
 
-## Current status (2026-06-12)
+## Current status (2026-06-12, end of first development sprint)
 
 - ☑ Source docs digested; verified findings + benchmarks table in 01.
-- ☑ Phase-1 starter fast-sim running: `../fastsim` (6/6 tests; x–Q² rate +
-  FOM maps in `../fastsim/out/`). Toy inputs clearly labeled; verified
-  P_p/P_n for ⁷Li encoded.
+- ☑ Phase-1 fast-sim developed and tested (15 tests): rates/FOM maps,
+  **first tagging-acceptance numbers** (⁷Li α→RP 96–99%; ⁶Li α 3–9% at
+  IP6 — quantitative beam-blindness), **first money plots** for all three
+  observables (gluonometry 5σ at Δ/F₁=10⁻³ within ~15–40 fb⁻¹/u;
+  CBT-vs-TMT ≈5σ at high x with 100 fb⁻¹/u), estimator closure tests,
+  and PDF-grid backends (CT18NLO, NNPDFpol11) behind the toy interfaces.
+  See `../fastsim/README.md` for the headline numbers and caveats.
 - ☑ Local stack surveyed: BeAGLE present but needs FLUKA (use BNL/JLab
   prebuilds); eic-shell container runnable but stale (image renamed
   `eic_xl`; current releases epic 26.06.0, EICrecon v1.38.0) → reinstall
@@ -59,4 +63,6 @@ brings to the EIC, in support of the ANL polarized ⁶,⁷Li ion-source program
 - ☐ Next actions (cheapest-first): ask Cloët about the ⁶Li
   effective-polarization convention (factor 2.4 in the g₁ FOM, plans/04
   item 6); request SDCC/ifarm access + email BeAGLE authors (long pole,
-  plans/02 step 1.5); adopt EPIOS scenario numbers (plans/02 step 1.1).
+  plans/02 step 1.5); adopt EPIOS scenario numbers and digitized
+  CBT/TMT/b₁ theory curves (steps 1.1–1.2); then rerun money plots on
+  grid inputs.

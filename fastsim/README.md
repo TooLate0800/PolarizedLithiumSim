@@ -1,44 +1,62 @@
-# polli_fastsim — Phase-1 fast simulation starter
+# polli_fastsim — Phase-1 fast simulation
 
-Fast (analytic, binned) simulation for the polarized ⁶Li/⁷Li @ EIC
-feasibility study. No event generation: rates per (x,Q²) bin from a
-structure-function model × luminosity, statistical figure-of-merit from
-asymmetry estimators. Companion to `../plans/02_phase1_event_generation.md`.
+Fast (analytic + sampling) simulation for the polarized ⁶Li/⁷Li @ EIC
+feasibility study. Companion to `../plans/02_phase1_event_generation.md`.
 
 ## Quick start
 
 ```bash
 cd fastsim
-python3 -m pytest tests/ -q          # smoke tests
+python3 -m pytest tests/ -q                 # 15 tests (grid tests auto-skip)
 python3 scripts/phase_space_map.py --ion 7Li --lumi 10 --outdir out
-python3 scripts/phase_space_map.py --ion 6Li --lumi 10 --outdir out
+python3 scripts/tagging_acceptance.py --outdir out      # spectator tagging
+python3 scripts/money_polemc.py --outdir out            # polarized EMC FOM
+python3 scripts/money_b1.py --outdir out                # tensor b1 FOM
+python3 scripts/money_delta.py --outdir out             # gluonometry reach
+python3 scripts/validate_inputs.py                      # toy vs PDF grids
 ```
 
-Outputs: x–Q² rate maps and per-bin statistical-precision maps for the
-three flagship observables, plus `summary_<ion>.txt`.
+One-time PDF-grid setup (optional; toys are the default backend):
+```bash
+pip3 install --user parton && python3 -m parton update
+yes | python3 -m parton install CT18NLO
+yes | python3 -m parton install NNPDFpol11_100
+```
 
 ## Modules
 
 | module | content |
 |---|---|
-| `beams.py` | species table (d, ³He, ⁶Li, ⁷Li), rigidity-scaled top energies, energy-scan configs |
-| `kinematics.py` | DIS variables, scattered-electron lab kinematics, acceptance masks, log grids |
-| `structure.py` | **TOY** F2p/F2n (HERA-anchored ±30%), nuclear F2A builder with EMC-ratio hook, NC cross section |
-| `polarized.py` | **TOY** g1p/g1n, polarized-EMC ratio hook, toy b1 (HERMES-like), toy Δ(x,Q²) scenarios |
-| `asymmetries.py` | spin-1 master formula pieces: A∥ (g1), A_zz (b1), A_cos2φ (Δ); statistical error estimators |
-| `fom.py` | luminosity scenarios → events/bin → δ(observable) maps + significance |
+| `beams.py` | species (d, ³He, ⁶Li, ⁷Li), rigidity-scaled top energies, verified ⁷Li P_p/P_n |
+| `kinematics.py` | DIS variables, scattered-electron lab kinematics, acceptance masks |
+| `structure.py` | **TOY** F2 (±40% vs CT18, see validate_inputs) + `PartonF2` grid backend, nuclear builder, NC cross section |
+| `polarized.py` | **TOY** g1 + `PartonG1` (NNPDFpol11); scenario curves: CBT 2× / TMT 1× polarized EMC, HERMES-like vs convolution b1, Δ scenarios |
+| `asymmetries.py` | spin-1 master-formula asymmetries (A∥, A_zz, A_cos2φ) + error estimators (toy-MC validated, `tests/test_closure.py`) |
+| `fom.py` | luminosity scenarios → events/bin → δ(observable); Q²-combination helper |
+| `spectator.py` | α+d / α+t cluster momentum densities (S/P-wave), lab boost → (pT, θ, R) |
+| `farforward.py` | verified far-forward windows (RP/OMD/B0/ZDC) + rigidity routing |
 
-## Big caveats (by design — see plans/02, steps 1.3–1.5)
+## First results (TOY inputs, statistical only — headline numbers)
 
-1. Every physics input marked **TOY** must be replaced before quoting
-   results: LHAPDF/JAM/DSSV grids for F2/g1, digitized Cloët–Bentz–Thomas
-   curves for the polarized-EMC ratio, theory predictions for b1(⁶Li) and
-   Δ. The interfaces are built so each swap is one line.
-2. Ion in-ring polarizations (`Scenario.pol_ion_*`) are placeholders;
-   source targets are P_z ≥ 0.90, P_zz ≥ 0.80 (ECRP proposal Table 1) and
-   ring transport survival is an open question (plans/04_open_questions.md).
-3. Li top energies are rigidity estimates (275·Z/A GeV/u); confirm with
-   BNL C-AD / EPIOS.
-4. Statistical errors only; no detector smearing beyond η/E′ cuts of the
-   scattered electron (Phase-1 step 1.6 adds eic-smear/Delphes; spectator
-   tagging acceptance comes from BeAGLE + far-forward maps in step 1.7).
+- **Tagging acceptance at IP6** (cluster model, β=0.3 GeV central):
+  ⁷Li α-tag ≈ **96–99% into the Roman Pots** (optics-robust);
+  ⁶Li α-tag ≈ **3–9%** (high-acceptance optics; tail-dominated, ×3 model
+  spread) collapsing to 1–2% with high-divergence optics; ⁷Li t-tag ~ 0.
+- **Gluonometry**: 5σ on Δ/F₁ = 10⁻³ (Sather–Schmidt scale) at
+  **~15–40 fb⁻¹/u** depending on P_zz and energy.
+- **Polarized EMC**: δΔR ≈ 3.5–8% per x-bin at 10 fb⁻¹/u (3 energies
+  combined); CBT-vs-TMT discrimination ≈ 5σ at x ≈ 0.5–0.7 with
+  100 fb⁻¹/u.
+- **b₁**: δA_zz ≈ 10⁻³-level per x-bin at 10 fb⁻¹/u, P_zz = 0.6–0.8.
+
+## Big caveats (by design — see plans/02 steps 1.2–1.5)
+
+1. TOY/scenario inputs everywhere until step 1.2 completes (CBT/TMT and
+   b1 curves are qualitative shapes, not digitized theory).
+2. Ion in-ring polarizations are placeholders (source targets: P_z ≥ 0.90,
+   P_zz ≥ 0.80); survival through EBIS+ring is open (plans/04 #1).
+3. Cluster-spectator model: two-parameter wave functions; the ⁶Li tail
+   (hence its IP6 acceptance) is genuinely model-dominated → VMC densities
+   / BeAGLE needed (plans/02 step 1.5.3).
+4. Far-forward windows are Phase-1 parameterizations; the near-beam band
+   and dispersion assumptions need Phase-2 optics (plans/04 #11).

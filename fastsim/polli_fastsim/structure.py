@@ -42,6 +42,55 @@ def r_sigma_lt(x, q2):
     return 0.18 / (1.0 + q2 / 50.0)
 
 
+class PartonF2:
+    """LO F2 from an LHAPDF grid via the pure-python `parton` package.
+
+    F2 = sum_q e_q^2 (x q + x qbar); neutron by isospin u<->d swap.
+    Install grids once:  yes | python3 -m parton install CT18NLO
+    Drop-in replacement for ToyF2 (same interface).
+    """
+
+    _E2 = {1: 1 / 9, 2: 4 / 9, 3: 1 / 9, 4: 4 / 9, 5: 1 / 9}
+
+    def __init__(self, setname="CT18NLO", member=0):
+        from parton import mkPDF  # lazy: optional dependency
+        self._pdf = mkPDF(setname, member)
+        self._f2p_vec = np.vectorize(self._f2p_scalar)
+
+    def _f2p_scalar(self, x, q2):
+        if not (0.0 < x < 1.0):
+            return 0.0
+        tot = 0.0
+        for pid, e2 in self._E2.items():
+            tot += e2 * (self._pdf.xfxQ2(pid, x, q2)
+                         + self._pdf.xfxQ2(-pid, x, q2))
+        return max(tot, 0.0)
+
+    def f2p(self, x, q2):
+        return self._f2p_vec(np.asarray(x, dtype=float),
+                             np.asarray(q2, dtype=float))
+
+    def f2n(self, x, q2):
+        # isospin: swap the u and d charges
+        x = np.asarray(x, dtype=float)
+        q2 = np.asarray(q2, dtype=float)
+
+        def scalar(xx, qq):
+            if not (0.0 < xx < 1.0):
+                return 0.0
+            e2n = {1: 4 / 9, 2: 1 / 9, 3: 1 / 9, 4: 4 / 9, 5: 1 / 9}
+            return max(sum(e2 * (self._pdf.xfxQ2(p, xx, qq)
+                                 + self._pdf.xfxQ2(-p, xx, qq))
+                           for p, e2 in e2n.items()), 0.0)
+
+        return np.vectorize(scalar)(x, q2)
+
+    def f2n_over_f2p(self, x, q2=10.0):
+        f2p = self.f2p(x, q2)
+        return np.where(f2p > 0, self.f2n(x, q2) / np.maximum(f2p, 1e-30),
+                        1.0)
+
+
 class NuclearF2:
     """Whole-nucleus F2A = Z*F2p + N*F2n, with an optional EMC-ratio hook.
 
