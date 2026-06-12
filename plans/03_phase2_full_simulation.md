@@ -1,0 +1,198 @@
+# Phase 2 — Full EIC (ePIC) Simulation
+
+**Goal.** End-to-end demonstration with the real detector: generator events →
+beam-effects afterburner → Geant4 (npsim + ePIC DD4hep geometry) →
+reconstruction (EICrecon) → physics analysis. Two questions only full sim
+can answer: (1) far-forward acceptance/efficiency/PID for Li fragments with
+real magnets, beam pipe, and optics; (2) reconstructed-level asymmetry
+extraction with realistic resolutions, acceptances, and backgrounds
+(closure test of the Phase-1 FOM).
+
+*Tool-chain facts below were fetch-verified against eic.github.io, the
+eic/* GitHub repos, and the cited arXiv papers on 2026-06-12.*
+
+**Status legend:** ☐ todo ◐ started ☑ done
+
+---
+
+## Step 2.0 ◐ Local environment refresh (days)
+
+Current local state (checked 2026-06-12): eic-shell at `~/Projects/eic`
+with `jug_xl-nightly.sif` (4 GB, ~Sep 2024); `npsim`/`eicrecon` confirmed
+runnable inside. The container has since been **renamed `eic_xl`**; current
+releases: epic geometry **26.06.0**, EICrecon **v1.38.0**, npsim **v1.6.1**.
+Local `epic` @ 24.08.0 and `EICrecon` @ v1.6.0 checkouts are ~2 years stale.
+
+1. Reinstall fresh (old installer pulls the renamed image):
+   ```bash
+   cd ~/Projects/eic && curl --location https://get.epic-eic.org | bash
+   ./eic-shell        # pin a release: curl -L https://get.epic-eic.org | bash -s -- -v 26.06-stable
+   ```
+2. Use the container-shipped geometry; source it the current way:
+   ```bash
+   source /opt/detector/epic-main/bin/thisepic.sh   # sets $DETECTOR_PATH, $DETECTOR_CONFIG
+   ```
+   `epic_craterlake.xml` is the flagship config; energy/species variants
+   exist as `epic_craterlake_{5x41,10x100,18x275}.xml` and ion configs
+   (`_18x110_Au`, `_10x110_He3`, `_10x130_H2`, …). Far-forward detectors
+   are in craterlake by default. Build `epic`/`EICrecon` from source only
+   when modifying geometry (needed in step 2.1 for Li beamline files).
+3. Smoke test per tutorials (eic.github.io/documentation/tutorials.html;
+   esp. tutorial-simulations-using-npsim-and-geant4, tutorial-analysis,
+   tutorial-jana2):
+   ```bash
+   npsim --compactFile $DETECTOR_PATH/epic_craterlake.xml -N 100 \
+         --inputFiles input.hepmc --outputFile sim.edm4hep.root
+   eicrecon -Ppodio:output_file=reco.edm4eic.root sim.edm4hep.root
+   ```
+   Record exact commands + versions in `fullsim/README.md` as the runbook.
+
+## Step 2.1 ☐ Beam configuration for Li species (2–3 weeks, w/ FF group)
+
+Three Li-specific customizations are required (none exist today — verified
+by absence in eic/afterburner, eic/epic, eic/BeAGLEsamples):
+
+1. **Afterburner preset.** `abconv` applies the 25 mrad (+100 µrad vertical)
+   crossing angle, divergence, crab kick, and vertex smearing *before*
+   npsim (campaign convention; never combine with ddsim's
+   `--crossingAngleBoost`). It requires exactly two status-4 beam
+   particles (one PDG 11) and snaps the ion energy to brackets
+   {275,250,166,130,115,110,100,41}×{18,10,9,5} GeV — ⁶Li @137.5 or
+   ⁷Li @117.9 GeV/u **fall in no bracket** → abconv throws. Options:
+   (a) run 110 GeV/u points with `-p ip6_eAu_110x10`-style presets as an
+   optics proxy (β*/divergence will be Au's, not Li's — fine for first
+   acceptance look); (b) add `ip6_eLi6_*`/`ip6_eLi7_*` preset functions in
+   `cpp/afterburner/EicConfigurator.cc` (copy the eAu/eHe3 pattern) with
+   C-AD-blessed parameters, and PR upstream.
+2. **Beamline field maps in eic/epic.** Species configs differ only in
+   `compact/fields/beamline_{E}x{P}_{species}.xml` (rigidity-scaled
+   magnets) + a `configurations/craterlake_*.yml`. For ⁶Li (Z/A = 1/2) the
+   existing `beamline_5x41_He4.xml` is a direct template (same Z/A); ⁷Li
+   (Z/A = 3/7) needs new scale factors. Coordinate with the ePIC
+   far-forward WG (A. Jentsch) — the Au files carry explicit "ASK FF
+   EXPERTS" warnings.
+3. **Generator runcard + conversion.** BeAGLE accepts A,Z via runcard
+   (`eic/BeAGLEsamples` has d and ³He cards; write the Li ones). Chain:
+   BeAGLE output → eic-smear `TreeToHepMC` → `abconv` → npsim. HepMC3
+   conventions: status 1 = transported, 4 = beam (kept in
+   `MCParticles.generatorStatus` but not transported); units read from the
+   file header; fragments as final-state particles with 10-digit nuclear
+   PDG codes (α = 1000020040, t = 1000010030). Watch-item: excited-ion
+   codes (10LZZZAAAI, I≠0) from BeAGLE had DD4hep fixes — sanitize to
+   ground-state codes if npsim drops them (`npsim/scripts/
+   sanitize_hepmc3.py` exists for header fixes).
+4. Validate: afterburned vertex/angle distributions reproduce the preset
+   tables; α/t/d primaries survive HepMC3 → npsim → Geant4 ion transport
+   (100-event gun jobs).
+
+## Step 2.2 ☐ Far-forward acceptance for Li fragments (4–8 weeks, core)
+
+**This is the novel deliverable.** Verified far-forward suite (YR matrix;
+arXiv:2108.08314 Table I; arXiv:2409.02811; arXiv:2406.12877):
+
+| detector | z | θ window | rigidity/x_L window | key resolution |
+|---|---|---|---|---|
+| B0 tracker+EMCal | 5.4–6.4 m | 5.5–20 mrad | any charged in window | δp/p ≈ 2–4%; γ: 6–7%/√E, E>50 MeV |
+| Roman Pots ×2 | 26 & 28 m (10σ from beam) | 0–5 mrad | R ≈ 0.6–0.95 | pT cutoff ≈ 0.2 (high-acc optics) – 0.45 (high-div) GeV/c |
+| Off-Momentum ×2 | 22.5 & 24.5 m | 0–5 (uniform <2) mrad | R ≈ 0.4–0.6 | σ_pT ≈ 20% @100 MeV/c; no low-pT cutoff |
+| ZDC | 35–37.5 m | 0–4/4.5 mrad | neutrals | n: 50%/√E ⊕ 5%; γ crystal: 5%/√E ⊕ 3% |
+
+(θ ≈ 5–5.5 mrad RP/OMD↔B0 gap is a known hole; beam-pipe material costs
+5–20%.)
+
+**Rigidity routing, R = (A_f·Z_beam)/(A_beam·Z_f)** — corrected mapping
+that drives the whole tagging program:
+
+| fragment | ⁶Li beam (Z/A=1/2) | ⁷Li beam (Z/A=3/7) |
+|---|---|---|
+| n | ZDC | ZDC |
+| p | R=0.50 → OMD center | R=0.43 → OMD low edge |
+| d | R=1.00 → **beam-blind** below RP pT cutoff | R=0.86 → Roman Pots |
+| t | R=1.50 → **no coverage** | R=1.29 → **no coverage** |
+| ³He | R=0.75 → Roman Pots | R=0.64 → RP/OMD boundary |
+| α | R=1.00 → **beam-blind** (pT tail only) | R=0.86 → **Roman Pots** |
+
+Consequences to quantify (no literature exists for e+Li breakup tagging —
+the only Li far-forward datapoint is coherent J/ψ at IR-8, arXiv:2511.05638,
+⁷Li tagging eff. 17.75%):
+- **⁷Li α-tag works at IP6** (R=0.86 sits mid-RP-window): e+⁷Li → e′+X+α
+  selects DIS on the *triton cluster* — the polarized-EMC companion channel.
+  Quantify acceptance × purity vs x_L, pT.
+- **⁶Li α-tag is the hard case** (R=1.0): only the pT ≳ 0.2–0.45 GeV/c tail
+  is visible at IP6, but the α–d cluster Fermi momentum is soft → fold the
+  BeAGLE/cluster-model pT(α) distribution with the 10σ optics cutoff for
+  both optics settings; this number decides whether the d-cluster tagging
+  argument holds at IP6, needs the IR-8 secondary focus (RPs at 44–45.5 m
+  recover R≈1 down to pT ~ 0), or relies on the ⁶Li → p/³He channels.
+- **Tritons are invisible at IP6** (R>1 bends less than beam, no detector):
+  the α+t double-tag of ⁷Li is *not* available at IP6 — document for the
+  second-detector/IR-8 case.
+- ZDC neutron tagging (evaporation n from both isotopes) + de-excitation γ.
+
+Work plan: (1) particle-gun (x_L, pT, vertex) scans per fragment per beam
+setting → acceptance maps; validate against published e+d maps
+(arXiv:2108.08314 App. B) as control. (2) Check EICrecon FF reconstruction
+(`ForwardRomanPotRecParticles`, `ForwardOffMRecParticles`, B0, ZDC
+collections) for Li-rigidity transfer matrices; request/derive if
+proton-tuned. (3) Fold BeAGLE e+Li events → tagging efficiency × purity ×
+mis-tag matrix at reconstructed level. (4) Publish "Li far-forward tagging
+performance" note; feed parameterizations back into the Phase-1 fast-sim.
+
+## Step 2.3 ☐ Central-detector physics performance (4 weeks)
+
+1. Scattered electron: e-ID efficiency/purity vs (x,Q²); kinematic
+   reconstruction (electron vs JB vs Σ/DA — tutorial-kinematic-
+   reconstruction) on e+Li with Fermi smearing.
+2. x–Q² migration matrices at reco level → re-derive per-bin FOM; confirm
+   Phase-1 binning (purity ≳ 0.8) or rebin.
+3. φ resolution & acceptance × crossing-angle correlations vs the cos 2φ
+   gluonometry amplitude: inject known Δ-modulation by weighting, fit at
+   reco level, quantify dilution + fake modulation. Make-or-break for the
+   gluonometry case — do early with small samples.
+
+## Step 2.4 ☐ Pseudo-experiment closure tests (4 weeks)
+
+1. Weight reconstructed unpolarized samples with Phase-1 asymmetry models
+   (A∥, A_zz, A_cos2φ) incl. spin-state bookkeeping (bunch patterns;
+   λ = +,0,− luminosity shares for tensor running).
+2. Extract observables with the analysis estimators; verify unbiased pulls;
+   quote stat ⊕ reco systematics.
+3. Systematics: relative luminosity between spin states, δP/P polarimetry
+   (HJET-for-Li is itself R&D), φ-acceptance stability.
+
+## Step 2.5 ☐ Campaign-scale production & write-up (ongoing)
+
+1. Existing eA campaign datasets to reuse for technique validation
+   (verified on `root://dtn-eic.jlab.org//volatile/eic/EPIC/`, browsable
+   with `xrdfs ls`): e+d BeAGLE 10×130 (tagging samples), e+³He BeAGLE
+   5×41/10×110/18×110/10×166 (A₁ⁿ double-tagging), e+Au BeAGLE DIS.
+   Campaign infra: `eic/simulation_campaign_hepmc3` + condor; species enter
+   via geometry filename (`${DETECTOR_CONFIG}_${EBEAM}x${PBEAM}.xml`);
+   afterburning is done upstream of campaigns (`*_ABCONV` datasets).
+2. Estimate compute (Geant4 e+A ~ min/event → 10⁷ events needs farm/OSG);
+   prepare configs to campaign standards so an official e+Li request can go
+   through ePIC once endorsed.
+3. Final note: "Feasibility of polarized ⁶,⁷Li physics with ePIC at the
+   EIC" — reco-level FOMs, tagging performance, requirements flow-down,
+   proposed run plan. Reference baseline: ePIC preTDR v3.1
+   (Zenodo 10.5281/zenodo.19496158).
+
+---
+
+## Sequencing and gates
+
+2.0 → 2.1 → 2.2 (start with guns — can begin before BeAGLE samples exist)
+→ 2.3 → 2.4 → 2.5. Gate each step on validation against e+d / e+³He
+references. Calendar: 4–6 months part-time once Phase-1 step 1.5 supplies
+samples.
+
+## Risks
+
+| risk | mitigation |
+|---|---|
+| Li optics/afterburner configs don't exist | verified: 3 concrete artifacts to add (preset, beamline XML, runcard); ⁶Li can proxy d/He4 (same Z/A); engage FF WG early for ⁷Li |
+| ⁶Li α-tag fails at IP6 (R=1 beam-blind) | quantify pT-tail acceptance; document IR-8 secondary-focus case; pivot ⁶Li tagging to p/³He channels |
+| Geant4/DD4hep mishandles light-ion or excited-ion primaries | gun tests in 2.1.4; sanitize PDG codes to ground states |
+| EICrecon FF matrices proton-tuned | derive Li-rigidity matrices with FF WG |
+| Compute exceeds local resources | guns + small samples locally; campaign production via collaboration |
+| Container/geometry churn | pin container per study; record versions in every output dir |

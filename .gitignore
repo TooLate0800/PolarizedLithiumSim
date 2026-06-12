@@ -1,0 +1,12 @@
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# generated fast-sim outputs (reproduce with fastsim/scripts/phase_space_map.py)
+fastsim/out/
+
+# local copies of public reference papers (large; fetch from arXiv instead)
+/athena.pdf
+/jam.pdf

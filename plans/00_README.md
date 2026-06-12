@@ -1,0 +1,62 @@
+# Polarized ⁶,⁷Li @ EIC — Simulation Program Plans
+
+Demonstrate feasibility and showcase the physics a polarized lithium source
+brings to the EIC, in support of the ANL polarized ⁶,⁷Li ion-source program
+(`docs/ecrp_2026_proposal.pdf`, NOFO DE-FOA-0003602).
+
+## Document map
+
+| doc | content |
+|---|---|
+| [01_findings_physics_case.md](01_findings_physics_case.md) | What the source docs + literature establish: the three flagship observables (gluonometry Δ, tensor b₁, polarized EMC), formulas, beam parameters, polarization inputs |
+| [02_phase1_event_generation.md](02_phase1_event_generation.md) | Phase 1: fast simulation + BeAGLE — phase space, rates, FOMs, spectator-tagging purity. Step-by-step with effort estimates |
+| [03_phase2_full_simulation.md](03_phase2_full_simulation.md) | Phase 2: full ePIC chain (eic-shell → npsim → EICrecon) — far-forward acceptance for Li fragments, reconstructed-level closure tests |
+| [04_open_questions.md](04_open_questions.md) | External dependencies: ring spin dynamics, optics for Li, BeAGLE validity, theory curves — each with owner and default assumption |
+
+## The physics in three lines
+
+1. **⁶Li (spin-1)** = practical replacement for polarized deuterons (which
+   the EIC ring likely cannot keep polarized): tensor structure function b₁
+   and the purely gluonic double-helicity-flip Δ(x,Q²) ("nuclear
+   gluonometry"), plus medium modification via ⁶Li-vs-d comparison.
+2. **⁷Li (spin-3/2)** = effective polarized proton in-medium (P_p ≈ 0.86):
+   the polarized EMC effect over an order of magnitude more x–Q² than JLab,
+   discriminating mean-field vs SRC origins of the EMC effect.
+3. **Collider-mode spectator tagging** (α, t, n in Roman Pots/OMD/B0/ZDC)
+   selects the struck cluster — impossible in fixed-target; its purity is
+   the simulation deliverable the ECRP proposal explicitly calls for.
+
+## Strategic findings from the verified research sweep (2026-06-12)
+
+1. **Four confirmed literature gaps we can publish first**: b₁ for any
+   A > 2 nucleus; any numerical EIC gluonometry (Δ) projection; α-tagged
+   DIS on ⁶Li; a Li-beam luminosity/polarization parameter set.
+2. **Tagging inverts between isotopes at IP6** (rigidity-verified): ⁷Li
+   α-tag lands mid-Roman-Pot window (works); ⁶Li α-tag is beam-blind below
+   the RP pT cutoff (needs the pT tail, p/³He channels, or IR-8 secondary
+   focus); tritons have no IP6 coverage at all. ⁷Li — the isotope the
+   source commissions first — is also the tagging-friendly one.
+3. **No generator anywhere does polarized nuclei** — asymmetry reweighting
+   on unpolarized samples (BeAGLE for breakup) is the established route;
+   BeAGLE runs A = 6,7 but untuned (C-12 Fermi momentum, no cluster
+   geometry) → validation + cluster-IA cross-check is mandatory.
+4. **Machine feasibility is already argued in EPIOS** (arXiv:2510.10794,
+   PRC 113:060501): G(⁶Li) = −0.178 handled deuteron-like, G(⁷Li) = +1.532
+   with partial snakes; ~138/~117 GeV/u top energies.
+5. **Calendar anchor**: INT program on polarized ion beams at EIC,
+   March 22 – April 2, 2027 — target for Phase-1 money plots.
+
+## Current status (2026-06-12)
+
+- ☑ Source docs digested; verified findings + benchmarks table in 01.
+- ☑ Phase-1 starter fast-sim running: `../fastsim` (6/6 tests; x–Q² rate +
+  FOM maps in `../fastsim/out/`). Toy inputs clearly labeled; verified
+  P_p/P_n for ⁷Li encoded.
+- ☑ Local stack surveyed: BeAGLE present but needs FLUKA (use BNL/JLab
+  prebuilds); eic-shell container runnable but stale (image renamed
+  `eic_xl`; current releases epic 26.06.0, EICrecon v1.38.0) → reinstall
+  at Phase-2 start.
+- ☐ Next actions (cheapest-first): ask Cloët about the ⁶Li
+  effective-polarization convention (factor 2.4 in the g₁ FOM, plans/04
+  item 6); request SDCC/ifarm access + email BeAGLE authors (long pole,
+  plans/02 step 1.5); adopt EPIOS scenario numbers (plans/02 step 1.1).

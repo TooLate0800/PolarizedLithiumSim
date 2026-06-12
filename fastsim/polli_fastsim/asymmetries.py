@@ -1,0 +1,75 @@
+"""Asymmetry formulas for spin-1/2 and spin-1 (tensor) targets.
+
+Spin-1 master formula (unpolarized e, target spin at angle theta_m, target
+spin projection lambda_m in {+1, 0, -1}; Hoodbhoy-Jaffe-Manohar NPB 312:571,
+as in J. Maxwell's slides, docs/Discussions.pptx p.5):
+
+  dsigma/(dx dy dphi)(lambda_m) = (2 y alpha^2 / Q^2) *
+      [ F1 + (2/3) a_m b1 + (1-y)/(x y^2) (F2 + (2/3) a_m b2)
+        - (1-y)/y^2 * c_m * sin^2(theta_m) * Delta(x,Q2) * cos(2 phi) ]
+
+  a_m = (1/4) c_m (3 cos^2 theta_m - 1),  c_m = 3|lambda_m| - 2 -> (1,-2,1)
+
+Conventions chosen here (document in any plot):
+  Azz  = (s+ + s- - 2 s0) / (s+ + s- + s0)        (longitudinal, theta_m=0)
+       = (2/3) [b1 + (1-y)/(x y^2) b2] / [F1 + (1-y)/(x y^2) F2] -> measures b1
+  A2phi(lambda=+-1, theta_m=90deg)
+       = -(1-y)/y^2 * Delta / D_phi  with D_phi = F1 + (1-y)/(x y^2) F2
+"""
+
+import numpy as np
+
+from .structure import r_sigma_lt
+
+
+def depolarization_d(y, x, q2):
+    """Virtual-photon depolarization factor D for A_par ~= D * A1."""
+    r = r_sigma_lt(x, q2)
+    return y * (2.0 - y) / (y * y + 2.0 * (1.0 - y) * (1.0 + r))
+
+
+def a_parallel(g1, f1, y, x, q2):
+    """Longitudinal double-spin asymmetry, A1 ~= g1/F1 approximation."""
+    return depolarization_d(y, x, q2) * g1 / np.maximum(f1, 1e-30)
+
+
+def phi_averaged_density(f1, f2, x, y):
+    """The phi-averaged bracket D_phi = F1 + (1-y)/(x y^2) F2."""
+    return f1 + (1.0 - y) / (x * y * y) * f2
+
+
+def azz(b1, f1, f2, x, y, b2=None, theta_m=0.0):
+    """Tensor asymmetry from the master formula. b2 defaults to 2x*b1."""
+    if b2 is None:
+        b2 = 2.0 * x * b1
+    geom = 0.5 * (3.0 * np.cos(theta_m) ** 2 - 1.0)  # =1 at theta_m=0
+    num = (2.0 / 3.0) * (b1 + (1.0 - y) / (x * y * y) * b2) * geom
+    return num / phi_averaged_density(f1, f2, x, y)
+
+
+def a_cos2phi(delta, f1, f2, x, y):
+    """cos(2phi) amplitude for lambda_m = +-1, theta_m = 90 deg."""
+    return -(1.0 - y) / (y * y) * delta / phi_averaged_density(f1, f2, x, y)
+
+
+# --- statistical uncertainties (per kinematic bin with N events total) ---
+
+
+def err_a_parallel(n, pe, pz):
+    """delta(A_par): two-state +/- flips, equal luminosity halves."""
+    n = np.maximum(np.asarray(n, dtype=float), 1e-12)
+    return 1.0 / (pe * pz * np.sqrt(n))
+
+
+def err_azz(n, pzz):
+    """delta(Azz) for the (n+ + n- - 2 n0)/(n+ + n- + n0) estimator,
+    equal luminosity thirds: Var(num) ~= 2N -> delta = sqrt(2/N) / Pzz."""
+    n = np.maximum(np.asarray(n, dtype=float), 1e-12)
+    return np.sqrt(2.0 / n) / pzz
+
+
+def err_cos2phi_amplitude(n, pzz):
+    """delta(amplitude) of a cos(2phi) fit: sqrt(2/N), scaled by tensor
+    polarization of the transverse spin states."""
+    n = np.maximum(np.asarray(n, dtype=float), 1e-12)
+    return np.sqrt(2.0 / n) / pzz

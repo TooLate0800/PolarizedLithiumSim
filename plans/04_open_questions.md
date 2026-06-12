@@ -1,0 +1,110 @@
+# Open Questions & External Dependencies
+
+Items that gate or shape the simulation program but are *not* solvable
+inside it. Each has an owner-to-engage and a default assumption we proceed
+with until answered. Updated 2026-06-12 after the fetch-verified literature
+sweep — several items moved from "unknown" to "answered, needs adoption".
+
+## Answered by the literature sweep (adopt, then verify with owners)
+
+A1. **Ring spin dynamics for Li** — EPIOS white paper (arXiv:2510.10794,
+    PRC 113:060501, Table 3): G(⁶Li) = −0.178 with 81 linear resonances to
+    top energy, handled like the deuteron (15 Tm solenoid partial snake +
+    jump quads; AGS crossing only imperfection resonances); G(⁷Li) = +1.532,
+    573 resonances, partial snakes keeping spin tune 0.2–0.8 + jump quads.
+    Top energies ~138 (⁶Li) / ~117 (⁷Li) GeV/u. Deuteron antecedent: Huang
+    et al. PRAB 23:021001. *Remaining question:* polarization-survival
+    fraction through the full chain (not in any paper) → keep FOMs
+    parameterized in P.
+A2. **Why ³He is quoted at 166 GeV/u in old documents** — eRHIC-era
+    250-GeV-proton rigidity legacy (Milner arXiv:1809.05626). Current design
+    number is 183 GeV/u = ⅔ × 275 with 6-snake spin preservation (CDR
+    Sec. 5.5; eic.jlab.org/Requirements). Li rigidity scaling (137.5/117.9
+    GeV/u) therefore stands, pending C-AD blessing of Li specifically.
+A3. **Far-forward routing of Li fragments** — verified windows (plans/03
+    §2.2): ⁷Li α → Roman Pots (R = 0.86); tritons → **no IP6 coverage**
+    (R > 1, both beams); ⁶Li α/d → beam-blind below RP pT cutoff (R = 1.0);
+    p → OMD; n/γ → ZDC. IR-8 secondary focus (RPs 44–45.5 m) recovers R ≈ 1
+    at pT → 0. *Remaining question:* none at concept level — quantitative
+    acceptance is exactly Phase-2 step 2.2.
+A4. **BeAGLE status for light nuclei** — runs any (A,Z) but A>4 uses the
+    C-12 Fermi-momentum parameterization, Woods–Saxon geometry without
+    α+d/α+t clustering, FLUKA evaporation untuned for A<12, code frozen
+    since 2023, FLUKA license required (prebuilt at BNL/JLab/CVMFS).
+    *Remaining question (Q7 below):* is the collaboration maintaining it /
+    can we get light-ion guidance?
+
+## Still open — machine / accelerator
+
+1. **Polarization survival through EBIS charge-breeding + ring for Li.**
+   Explicitly "a goal of the study rather than a promised outcome" in the
+   ECRP proposal; no number exists anywhere.
+   *Engage:* EPIOS (Raparia, Rathmann), MIT ³He group (Milner).
+   *Default:* P_z = 0.7 at IP, band {0.5, 0.9}.
+2. **Transverse ion polarization at IP6 for Li.** Gluonometry needs
+   transverse spin with unpolarized electrons. HSR stable direction is
+   vertical (transverse) in the arcs — possibly the *easy* orientation —
+   but the IP6 rotator/snake configuration for Li species is undefined.
+   Also: clean b₁ extraction prefers polarization along the momentum
+   transfer (Cosyn et al. arXiv:2410.12764) — a spin-direction systematic
+   to design for.
+   *Engage:* C-AD spin group via EPIOS; INT program (Mar 22–Apr 2, 2027).
+   *Default:* transverse running available with P = P_z value.
+3. **Tensor (λ=0) bunch operations.** Source RF transitions can prepare
+   m = 0 (proposal Sec. 3.5); unknowns: survival through acceleration,
+   bunch-by-bunch spin patterns, relative-luminosity control at 10⁻⁴.
+   *Default:* equal thirds (+,0,−), δ(rel-lumi) as a Phase-2 systematic.
+4. **Li luminosity.** Confirmed gap — no Li number exists in any document
+   (EPIOS included). Space charge, IBS, cooling for Li bunches unstudied.
+   *Engage:* EPIOS/C-AD. *Default:* 10 fb⁻¹/nucleon per setting, quoted
+   ∈ {1, 10, 100}.
+5. **Li ring polarimetry.** EPIOS concept: Li–Li elastic CNI vs polarized
+   Li jet (HJET analog) + Breit–Rabi absolute; analyzing-power theory
+   flagged as needing work. R&D scale in EPIOS: ~26 FTE-yr/12 yr.
+   *Default:* δP/P = 3% systematic in FOMs.
+
+## Still open — generator / theory
+
+6. **⁶Li effective-polarization convention** (factor 2.4 in the g₁ FOM):
+   slides' P_p = P_n = 1/3 (per-nucleon-normalized) vs cluster-model
+   whole-nucleus ≈ 0.81 (= 0.87 P_d × 0.93 D-state). ⁷Li is settled:
+   P_p = +0.866, P_n = −0.037.
+   *Engage:* I. Cloët (ANL, local). *Default in code:* 1/3 (conservative),
+   switch after resolution.
+7. **BeAGLE light-ion guidance / maintenance.** See A4.
+   *Engage:* M. Baker, A. Jentsch, Z. Tu, W. Chang.
+   *Fallback:* cluster-IA toy fragmenter (Phase-1 step 1.5.3).
+8. **Nuclear (n)PDFs at A = 6,7.** EPPS21/nNNPDF coverage to confirm;
+   polarized nuclear PDFs don't exist → effective-polarization convolution
+   + CBT/TMT medium curves as scenarios.
+9. **b₁ and Δ theory for ⁶Li specifically.** Confirmed literature gaps:
+   no b₁ prediction for any A > 2; no EIC Δ projection for any target.
+   First-mover opportunity — co-author with theory.
+   *Engage:* Cloët (ANL), Cosyn, Miller; lattice: Detmold/Shanahan.
+10. **Radiative corrections on tensor observables** (A_zz, cos 2φ).
+    Vector-case tools exist (DJANGOH/HERACLES); tensor RC uncharted.
+    *Default:* RC band from vector-case studies (Phase-1 step 1.4).
+
+## Still open — detector / software
+
+11. **Far-forward transfer matrices & optics at Li rigidities** (RP/OMD
+    reconstruction in EICrecon is tuned per beam setting).
+    *Engage:* ePIC FF WG (A. Jentsch). Phase-2 step 2.2.
+12. **Geant4/DD4hep light-ion & excited-ion primaries** (10LZZZAAAI codes
+    from BeAGLE; DD4hep had fixes ~PR #920; `sanitize_hepmc3.py` exists).
+    Verify in Phase-2 step 2.1.4.
+13. **Afterburner + beamline configs for Li** — verified absent; three
+    concrete artifacts to add (EicConfigurator.cc preset; beamline_*.xml;
+    BeAGLE runcard). ⁶Li can start from He-4/deuteron files (same Z/A).
+
+## Tracking
+
+| # | item | status | next action |
+|---|---|---|---|
+| A1–A4 | answered | adopt | encode in fastsim + plans (done); verify with owners |
+| 1–2 | P survival, transverse@IP | open | EPIOS contacts; aim INT 2027 |
+| 3–5 | tensor ops, lumi, polarimetry | open | EPIOS; state assumptions in every plot |
+| 6 | ⁶Li P convention | open | ask Cloët (local) — **first, cheapest, factor-2.4 impact** |
+| 7 | BeAGLE access+guidance | open | SDCC/ifarm accounts + email authors — **long pole, start now** |
+| 8–10 | theory inputs | open | Cloët/Cosyn/Miller engagement |
+| 11–13 | software checks | scheduled | inside Phase-1/2 steps |
