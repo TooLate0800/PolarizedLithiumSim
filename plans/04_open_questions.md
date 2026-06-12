@@ -74,6 +74,10 @@ A4. **BeAGLE status for light nuclei** — runs any (A,Z) but A>4 uses the
 7. **BeAGLE light-ion guidance / maintenance.** See A4.
    *Engage:* M. Baker, A. Jentsch, Z. Tu, W. Chang.
    *Fallback:* cluster-IA toy fragmenter (Phase-1 step 1.5.3).
+   *Update 2026-06-12:* local build prepared up to the FLUKA wall
+   (tools/beagle/); remaining user action = fluka.org registration.
+   e+d/e+³He official EVGEN confirmed downloadable via xrootd for the
+   control study.
 8. **Nuclear (n)PDFs at A = 6,7.** EPPS21/nNNPDF coverage to confirm;
    polarized nuclear PDFs don't exist → effective-polarization convolution
    + CBT/TMT medium curves as scenarios.

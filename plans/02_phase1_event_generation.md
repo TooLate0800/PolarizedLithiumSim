@@ -145,10 +145,18 @@ frozen since v1.03.02 (2023). The deuteron needed special treatment
 (`deutfix.f`, IA mode of arXiv:2005.14706 / 2108.08314) — expect Li to
 need analogous care.
 
-1. **Run environment.** BeAGLE needs FLUKA (license) + LHAPDF5 + RAPGAP;
-   ANL docs warn "no mere mortal is capable of building BeAGLE on his
-   system." Use the **prebuilt installations at BNL/JLab/CVMFS** first;
-   local build only as last resort. Track in 04_open_questions.
+1. **Run environment.** ◐ *2026-06-12: local build is one step from done —
+   LHAPDF 5.9.1 (+ CTEQ6L1 and EPS09 A=4,6,12 grids; `anear.f` maps both
+   isotopes to the valid A=6 EPS09 nucleus), RAPGAP-3.302 libs, PYTHIA6,
+   and CERNLIB 2024 core are built in `~/Projects/eic/beagle_deps/`;
+   the gfortran-11 recipe is pre-validated (PYTHIA/RADGEN/PyQM libs
+   compile; DPMJET stops only on FLUKA's `(DIMPAR)` includes). The single
+   missing piece is **FLUKA (personal license — user registers at
+   fluka.org, gfortran-11 64-bit build, export FLUPRO)**; then
+   `tools/beagle/build_beagle.sh` finishes the build. See
+   `tools/beagle/README.md`. Alternatives remain: BNL/JLab prebuilds, and
+   the official e+d/e+³He EVGEN samples are downloadable from here via
+   xrootd (verified) for the control study.
 2. **Configuration.** Cards: `TARPAR 6. 3.` / `TARPAR 7. 3.` (mixed n/p
    mode), `MOMENTUM <Ee> <p/u>` (⁶Li ≤137.5, ⁷Li ≤117.9 GeV/u), `genShd=1`,
    radgen on, `L-TAG` cuts as in the local e+D example

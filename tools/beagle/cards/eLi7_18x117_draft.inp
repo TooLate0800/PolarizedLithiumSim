@@ -1,0 +1,34 @@
+**********************************************************************
+* DRAFT BeAGLE input card: e + 7Li inclusive DIS, 18 x 117.9 GeV/u
+* Derived from the eD example card; card docs:
+*   https://wiki.bnl.gov/eic/index.php/BeAGLE
+* TODOs before production (plans/02 step 1.5.2-1.5.3):
+*  - FERMI card: eD example used a deuteron-specific setting (2, 0.62);
+*    confirm the appropriate A>4 mode/defaults with the BeAGLE authors.
+*    NOTE: A>4 uses the C-12 n(k) parameterization (anear: nPDF -> A=6).
+*  - L-TAG Q2/y ranges per study; statistics per energy point.
+*  - USERSET second arg = max E* handed to FLUKA (default 9.0).
+**********************************************************************
+PROJPAR                                                               ELECTRON
+TARPAR            7.0      3.0        0
+TAUFOR            7.0      25.0       1.0
+* FERMI           <-- intentionally left at BeAGLE defaults for A>4 (TODO)
+FSEED            13        -1         3         3
+OUTPUT           92
+OUTLEVEL         -1         -1          -1         1        100
+*           lepton p [GeV]   ion p per nucleon [GeV] (7Li: Z/A*275 = 117.9)
+MOMENTUM         18.0       117.9
+PARDECAY            2
+*           yMin      yMax    Q2Min    Q2Max   theta_Min theta_Max
+L-TAG           0.01       0.95       1.0    100.0       0.0      6.29
+MODEL                                                                 PYTHIA
+USERSET          16           9.0
+PY-INPUT                                                              eAt1dfJn
+PHOINPUT
+PROCESS           1 1 1 1 1 1 1 1
+ENDINPUT
+HISTOGRAM      101.0     102.0
+*           number of events
+START           1E4      0
+STOP
+*...+....1....+....2....+....3....+....4....+....5....+....6....+....7...
