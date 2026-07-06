@@ -10,3 +10,11 @@ fastsim/out/
 # local copies of public reference papers (large; fetch from arXiv instead)
 /athena.pdf
 /jam.pdf
+
+# editor swap files
+*.swp
+*.swo
+.*.sw?
+
+# external / upstream code trees (do not commit; use a submodule if needed)
+BeAGLE_jz/
