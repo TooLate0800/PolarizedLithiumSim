@@ -18,3 +18,9 @@ fastsim/out/
 
 # external / upstream code trees (do not commit; use a submodule if needed)
 BeAGLE_jz/
+
+# generated coverage plot directory (not tracked; regenerate from scripts)
+fastsim/scripts/out_coverage/
+
+# macOS Finder metadata
+.DS_Store
