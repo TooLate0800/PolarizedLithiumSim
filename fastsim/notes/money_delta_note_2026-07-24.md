@@ -25,6 +25,7 @@ transforming the reach picture from "requires a decade" to
   visualization/labeling correction.
 - 2026-07-24 (extension 2): Widened plotted x-axis range on Plots 1-4 from peak Δ/F₁ ∈ [3×10⁻⁴, 3×10⁻²] to [10⁻³, 10⁻¹] (three decades). Internal SCALES updated from [5×10⁻³, 0.6] to [0.02, 2.0]. Vertical dashed lines (bag at 1.6×10⁻², lattice at 1.2×10⁻²) unchanged. Reach numbers unchanged.
 - 2026-07-24 (extension 3): Added §4.2 (statistical derivation and interpretation) explaining: origin of δA_bin = √(2/N_bin)/P_zz from cos(2φ) ML fit, combined uncertainty as one-parameter Fisher fit giving σ = ŝ/δŝ, why per-bin |δA/A| can be 10³ while combined is 10⁻² (Fisher additivity), and the σ ↔ δA/A duality (σ = 5 ↔ δA/A = 20%).
+- 2026-07-24 (extension 4): Added §4.2.5 (References) listing pedagogical sources for the statistical framework used in §4.2: Cowan's Statistical Data Analysis, PDG Statistics chapter, Poskanzer-Voloshin flow-methodology paper (source of √(2/N) cos-fit uncertainty), Voloshin-Zhang (non-uniform acceptance extension), HERMES b₁ analysis (direct experimental precedent for tensor DIS asymmetry), and Lyons on the 5σ convention.
 
 ---
 
@@ -404,6 +405,69 @@ s_0^bag = 0.310 (mid_x shape, MID config), a 5σ result would report:
    (since σ ∝ √L). Today's numbers show that at 100 fb⁻¹/nucleon under the bag
    prediction, δA/A drops to ~0.6–1% (100σ+); the measurement becomes
    systematics-limited well before statistics run out.
+
+#### §4.2.5 References
+
+**Note**: bibliographic details (year, volume, page) have been provided by the
+author from recall; please cross-check on INSPIRE or the journal websites before
+citing publicly.
+
+The references below establish that the statistical framework in §4.2 is standard
+HEP practice. They are organized into three thematic groups.
+
+**Group 1: General statistical framework**
+
+1. G. Cowan, *Statistical Data Analysis* (Oxford University Press, 1998).
+   The standard HEP reference. Chapter 6 covers maximum likelihood estimation,
+   Fisher information, and the Cramér–Rao bound — the mathematical basis for
+   §4.2.2's derivation of the combined uncertainty as a single-parameter Fisher
+   fit.
+
+2. Particle Data Group, "Statistics" review chapter in the current *Review of
+   Particle Physics* (updated yearly at [pdg.lbl.gov](https://pdg.lbl.gov)).
+   Canonical modern reference for HEP conventions on discovery significance,
+   profile likelihood, and nuisance-parameter treatment. Cite the current-year
+   edition.
+
+**Group 2: cos(nφ) modulation fits**
+
+3. A. M. Poskanzer & S. A. Voloshin, "Methods for analyzing anisotropic flow
+   in relativistic nuclear collisions," *Phys. Rev. C* **58**, 1671 (1998).
+   arXiv:nucl-ex/9805001. Standard reference on Fourier-coefficient extraction
+   from N azimuthally-distributed events. Contains the derivation of the
+   δv_n = √(2/N) uncertainty on flow coefficients — the same math as §4.2.1 for
+   our δA_cos2φ per bin.
+
+4. S. A. Voloshin & Y. Zhang, "Flow study in relativistic nuclear collisions by
+   Fourier expansion of azimuthal particle distributions," *Z. Phys. C* **70**,
+   665 (1996). arXiv:hep-ph/9407282. Extends the treatment to non-uniform
+   azimuthal acceptance — relevant for real detectors with dead regions.
+
+**Group 3: Applied precedent for tensor DIS asymmetries**
+
+5. HERMES Collaboration (A. Airapetian *et al.*), "First measurement of the
+   tensor structure function b₁ of the deuteron," *Phys. Rev. Lett.* **95**,
+   242001 (2005). arXiv:hep-ex/0506018. Closest published precedent for a tensor
+   DIS asymmetry measurement. Documents the per-bin statistical treatment and
+   systematic-uncertainty framework in a real spin-1 target experiment
+   (unpolarized electron beam × tensor-polarized deuteron target). The direct
+   experimental analog of what our fast-sim is projecting for ⁶Li.
+
+**Optional: the "why 5σ?" reference**
+
+6. L. Lyons, "Discovering the significance of 5 sigma," arXiv:1310.1284 (2013).
+   Short (~5 pages) discussion of why HEP uses the 5σ threshold for discovery
+   (vs 3, 4, or 6). Historical and practical justification of §4.2.4's discovery
+   convention.
+
+The statistical framework in §4.2 is standard HEP practice as documented in [1]
+and [2]. The specific per-bin uncertainty formula δA_bin = √(2/N_bin)/P_zz
+(Eq. 5) is the tensor-polarization-scaled version of the well-known cos(nφ)
+amplitude uncertainty from [3, 4], applied to the double-helicity-flip observable
+rather than to elliptic flow. The direct experimental precedent for a tensor DIS
+asymmetry measurement is HERMES's b₁ analysis [5]; our machinery is essentially
+the ⁶Li tensor gluonometry analog of that framework, projected forward to EIC
+luminosities.
 
 ---
 
