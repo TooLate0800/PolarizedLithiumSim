@@ -214,6 +214,22 @@ _VARIANTS = {
 _PEAK_VALS = {name: _xab_peak_value(a, b) for name, (a, b) in _VARIANTS.items()}
 
 
+def peak_shape_value(alpha, beta):
+    """Peak value of x^alpha * (1-x)^beta at x_peak = alpha/(alpha+beta)."""
+    x_peak = alpha / (alpha + beta)
+    return (x_peak ** alpha) * ((1.0 - x_peak) ** beta)
+
+
+def scale_to_peak_delta_f1(scale_val, q2_ref, base, alpha, beta):
+    """Convert code-parameter `scale` to peak Δ/F₁.
+
+    peak Δ/F₁ = scale · α_s(Q²_ref) · max_x[x^α (1-x)^β]
+
+    Uses the rate-weighted mean Q² and the specified shape variant.
+    """
+    return scale_val * alpha_s(q2_ref, base=base) * peak_shape_value(alpha, beta)
+
+
 # Sanity check: at x = x_peak, f1 = 1, Δ (without α_s) should equal `scale`.
 def _sanity_check_shapes():
     for name, (alpha, beta) in _VARIANTS.items():
@@ -301,8 +317,20 @@ C_LAT = -0.009
 LUMINOSITIES_FB = [10.0, 100.0]
 
 # Grid parameters (identical to parent scripts)
-SCALES = np.logspace(np.log10(0.03), np.log10(3.0), 15)   # 0.03 to 3.0, 15 log-spaced
+# Anchor SCALES range to bag sum-rule reference for MID+mid_x: |A_bag| = 0.310
+# Range: 0.1 * |A_bag_ref| to 10 * |A_bag_ref| = [0.031, 3.10]
+_S0_BAG_REF = 0.310  # |A_bag| for MID+mid_x, computed a priori for range anchoring
+SCALES = np.logspace(np.log10(0.1 * _S0_BAG_REF), np.log10(10.0 * _S0_BAG_REF), 15)   # [0.031, 3.10]
 S0 = 1e-3           # reference scale for analytic rescaling
+
+# Rate-weighted mean Q² for MID config (used as reference for peak Δ/F₁ conversion)
+# This is the value from solve_A_from_sum_rule for mid config / mid_x shape.
+# Used only for x-axis labelling in Plots 1-4; does NOT affect any physics computation.
+_Q2_MEAN_MID_REF = 7.38   # GeV²
+
+# Reference shape parameters for x-axis conversion (mid_x: α=0.7, β=3)
+_REF_ALPHA = 0.7
+_REF_BETA  = 3.0
 
 # Min events cut (same as parent)
 MIN_EVENTS = 10
@@ -621,34 +649,38 @@ def _build_plot1_one_lumi(sig2_dict, a_vals, luminosity, outdir):
     ax.axhline(0.20, color="firebrick", ls="--", lw=1.5, zorder=4,
                label="5σ discovery (δA/A=0.20)")
 
-    # Vertical lines at |A_bag| and |A_lat| (mid_x reference)
+    # Vertical lines at raw |A| (scale) positions for bag and lattice sum-rule references
     if np.isfinite(a_bag_ref) and a_bag_ref > 0:
         ax.axvline(a_bag_ref, color=BAG_COLOR, ls="--", lw=1.3, zorder=5,
-                   label=f"bag |A|={a_bag_ref:.3f}")
+                   label=f"bag sum rule: $s_0^{{\\rm bag}}$ = {a_bag_ref:.3f}")
         ax.text(a_bag_ref * 1.07, 0.92,
-                "bag\n(mid_x)", fontsize=5.5, color=BAG_COLOR,
+                "bag", fontsize=5.5, color=BAG_COLOR,
                 transform=ax.get_xaxis_transform(), va="top")
     if np.isfinite(a_lat_ref) and a_lat_ref > 0:
         ax.axvline(a_lat_ref, color=LAT_COLOR, ls="--", lw=1.3, zorder=5,
-                   label=f"lattice |A|={a_lat_ref:.3f}")
+                   label=f"lattice sum rule: $s_0^{{\\rm lat}}$ = {a_lat_ref:.3f}")
         ax.text(a_lat_ref * 1.07, 0.78,
-                "lat\n(mid_x)", fontsize=5.5, color=LAT_COLOR,
+                "lat", fontsize=5.5, color=LAT_COLOR,
                 transform=ax.get_xaxis_transform(), va="top")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel(r"$\Delta/F_1$ scale (peak amplitude coefficient)", fontsize=10)
+    ax.set_xlabel(r"scale parameter $s$", fontsize=10)
     ax.set_ylabel(
         r"$\delta A / |A_{\cos 2\phi}|$ (combined)",
         fontsize=10
     )
     ax.set_xlim(SCALES[0] * 0.85, SCALES[-1] * 1.2)
 
+    ax.text(0.02, 0.05,
+            r"$\Delta(x,Q^2) = s \cdot \alpha_s(Q^2) \cdot F_1 \cdot x^\alpha (1-x)^\beta$",
+            transform=ax.transAxes, fontsize=6, color="dimgray", va="bottom")
+
     ax.legend(fontsize=7, ncol=2, loc="upper right", framealpha=0.7)
 
     ax.set_title(
-        f"$^6$Li δA/|A_cos2φ| — L = {L:g} fb$^{{-1}}$/u\n"
-        r"EPPS21, R1998, Cloet $P_{zz}$=0.267",
+        f"$^6$Li δA/|A_cos2φ| vs scale — L = {luminosity:g} fb⁻¹/u\n"
+        f"EPPS21, R1998, Cloet $P_{{zz}}$=0.267; sum-rule refs $s_0^{{\\rm bag}}$, $s_0^{{\\rm lat}}$",
         fontsize=10,
     )
     fig.tight_layout()
@@ -734,28 +766,32 @@ def build_plot2(sig2_dict, a_vals, outdir):
     ax.axhspan(1, 100, color="gold", alpha=0.15,
                label=r"1–100 fb$^{-1}$/u (plausible EIC program)")
 
-    # Vertical lines at |A_bag| and |A_lat|
+    # Vertical lines at raw |A| (scale) positions for bag and lattice sum-rule references
     if np.isfinite(a_bag_ref) and a_bag_ref > 0:
         ax.axvline(a_bag_ref, color=BAG_COLOR, ls="--", lw=1.3, zorder=5,
-                   label=f"Bag: |A|={a_bag_ref:.3e}")
+                   label=f"bag sum rule: $s_0^{{\\rm bag}}$ = {a_bag_ref:.3f}")
         ax.text(a_bag_ref * 1.07, 0.92,
-                "bag\n(mid_x)", fontsize=5.5, color=BAG_COLOR,
+                "bag", fontsize=5.5, color=BAG_COLOR,
                 transform=ax.get_xaxis_transform(), va="top")
     if np.isfinite(a_lat_ref) and a_lat_ref > 0:
         ax.axvline(a_lat_ref, color=LAT_COLOR, ls="--", lw=1.3, zorder=5,
-                   label=f"Lattice: |A|={a_lat_ref:.3e}")
+                   label=f"lattice sum rule: $s_0^{{\\rm lat}}$ = {a_lat_ref:.3f}")
         ax.text(a_lat_ref * 1.07, 0.75,
-                "lat\n(mid_x)", fontsize=5.5, color=LAT_COLOR,
+                "lat", fontsize=5.5, color=LAT_COLOR,
                 transform=ax.get_xaxis_transform(), va="top")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel(r"$\Delta/F_1$ scale (dimensionless)", fontsize=11)
+    ax.set_xlabel(r"scale parameter $s$", fontsize=11)
     ax.set_ylabel(r"$L_{5\sigma}$ [fb$^{-1}$/nucleon]", fontsize=11)
+    ax.set_xlim(SCALES[0] * 0.85, SCALES[-1] * 1.2)
+    ax.text(0.02, 0.05,
+            r"$\Delta(x,Q^2) = s \cdot \alpha_s(Q^2) \cdot F_1 \cdot x^\alpha (1-x)^\beta$",
+            transform=ax.transAxes, fontsize=6, color="dimgray", va="bottom")
     ax.set_title(
-        r"$^6$Li $L_{5\sigma}$ vs $\Delta/F_1$ scale — 3 energies × 3 shapes"
+        r"$^6$Li $L_{5\sigma}$ vs scale $s$ — 3 energies × 3 shapes"
         "\n"
-        r"EPPS21, R1998, Cloet $P_{zz}$=0.267; sum-rule verticals at mid_x A",
+        r"EPPS21, R1998, Cloet $P_{zz}$=0.267; sum-rule refs $s_0^{\rm bag}$, $s_0^{\rm lat}$",
         fontsize=10,
     )
 
@@ -819,27 +855,31 @@ def build_plot3(sig2_mid_midx, a_vals, outdir):
     ax.axhline(0.20, color="firebrick", ls="--", lw=1.4, zorder=4,
                label="5σ discovery")
 
-    # Vertical lines at |A_bag| and |A_lat|
+    # Vertical lines at raw |A| (scale) positions for bag and lattice sum-rule references
     if np.isfinite(a_bag) and a_bag > 0:
         ax.axvline(a_bag, color=BAG_COLOR, ls="--", lw=1.3, zorder=5,
-                   label=f"bag |A|={a_bag:.3f}")
+                   label=f"bag sum rule: $s_0^{{\\rm bag}}$ = {a_bag:.3f}")
         ax.text(a_bag * 1.07, 0.92, "bag", fontsize=6, color=BAG_COLOR,
                 transform=ax.get_xaxis_transform(), va="top")
     if np.isfinite(a_lat) and a_lat > 0:
         ax.axvline(a_lat, color=LAT_COLOR, ls="--", lw=1.3, zorder=5,
-                   label=f"lattice |A|={a_lat:.3f}")
+                   label=f"lattice sum rule: $s_0^{{\\rm lat}}$ = {a_lat:.3f}")
         ax.text(a_lat * 1.07, 0.78, "lat", fontsize=6, color=LAT_COLOR,
                 transform=ax.get_xaxis_transform(), va="top")
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel(r"$\Delta/F_1$ scale (dimensionless)", fontsize=10)
+    ax.set_xlabel(r"scale parameter $s$", fontsize=10)
     ax.set_ylabel(
         r"$\delta A / |A_{\cos 2\phi}|$ (relative stat. uncertainty)",
         fontsize=10
     )
+    ax.set_xlim(SCALES[0] * 0.85, SCALES[-1] * 1.2)
+    ax.text(0.02, 0.05,
+            r"$\Delta(x,Q^2) = s \cdot \alpha_s(Q^2) \cdot F_1 \cdot x^\alpha (1-x)^\beta$",
+            transform=ax.transAxes, fontsize=6, color="dimgray", va="bottom")
     ax.set_title(
-        "$^6$Li δA/|A_cos2φ| — mid config (10 × 50 GeV/u), mid_x shape\n"
+        "$^6$Li δA/|A_cos2φ| vs scale — mid config (10 × 50 GeV/u), mid_x shape\n"
         "Bag vs lattice sum-rule references, EPPS21, R1998, Cloet $P_{zz}$=0.267",
         fontsize=10,
     )
@@ -889,10 +929,10 @@ def build_plot4(sig2_mid_midx, a_vals, outdir):
     ax.axhspan(1, 100, color="gold", alpha=0.15,
                label=r"1–100 fb$^{-1}$/u (plausible EIC program)")
 
-    # Vertical lines
-    bag_label = (f"Bag sum rule: |A|={a_bag:.3e}"
+    # Vertical lines at raw |A| (scale) positions for bag and lattice sum-rule references
+    bag_label = (f"bag sum rule: $s_0^{{\\rm bag}}$ = {a_bag:.3f}"
                  if np.isfinite(a_bag) else "Bag: N/A")
-    lat_label = (f"Lattice sum rule: |A|={a_lat:.3e}"
+    lat_label = (f"lattice sum rule: $s_0^{{\\rm lat}}$ = {a_lat:.3f}"
                  if np.isfinite(a_lat) else "Lattice: N/A")
 
     if np.isfinite(a_bag) and a_bag > 0:
@@ -908,12 +948,16 @@ def build_plot4(sig2_mid_midx, a_vals, outdir):
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel(r"$\Delta/F_1$ scale (dimensionless)", fontsize=11)
+    ax.set_xlabel(r"scale parameter $s$", fontsize=11)
     ax.set_ylabel(r"$L_{5\sigma}$ [fb$^{-1}$/nucleon]", fontsize=11)
+    ax.set_xlim(SCALES[0] * 0.85, SCALES[-1] * 1.2)
+    ax.text(0.02, 0.05,
+            r"$\Delta(x,Q^2) = s \cdot \alpha_s(Q^2) \cdot F_1 \cdot x^\alpha (1-x)^\beta$",
+            transform=ax.transAxes, fontsize=6, color="dimgray", va="bottom")
     ax.set_title(
-        r"$^6$Li $L_{5\sigma}$ vs $\Delta/F_1$ scale — mid config, mid_x shape"
+        r"$^6$Li $L_{5\sigma}$ vs scale $s$ — mid config, mid_x shape"
         "\n"
-        f"Bag (|A|={a_bag:.3e}) and lattice (|A|={a_lat:.3e}) "
+        f"Bag ($s_0^{{\\rm bag}}$={a_bag:.3f}) and lattice ($s_0^{{\\rm lat}}$={a_lat:.3f}) "
         r"sum-rule references, EPPS21, R1998",
         fontsize=10,
     )
@@ -1087,6 +1131,69 @@ def build_perbin_plot(cfg, luminosity, config_tag, config_label,
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# K conversion factor: <Δ/F₁>_A = K * s
+# ══════════════════════════════════════════════════════════════════════════════
+
+def compute_K_factor(cfg, nf2_obj, base, variant):
+    """Compute the rate-weighted K factor: <Δ/F₁>_A = K * s.
+
+    Since Δ = s · α_s(Q²) · F₁ · x^α (1-x)^β / _PEAK_VALS[variant], we have:
+
+        <Δ/F₁>_A = s · [Σ_bins N_bin · α_s(Q²) · x^α (1-x)^β / _PEAK_VALS]
+                       / [Σ_bins N_bin · F₁]  × F₁   (F₁ cancels per bin)
+
+    More precisely:
+        K = Σ_bins [N_bin · α_s(Q²_bin) · x_bin^α · (1-x_bin)^β / _PEAK_VALS]
+            / Σ_bins [N_bin · F₁(x_bin, Q²_bin) / nucleon]
+        × F₁_ref
+
+    But the rate-weighted mean <Δ/F₁> at scale s=1 is simply:
+        K = Σ_bins [N_bin · (Δ_bin / F₁_bin) / s]
+          = Σ_bins [N_bin · α_s(Q²_bin) · x_bin^α (1-x_bin)^β / _PEAK_VALS]
+            / Σ_bins N_bin
+
+    (The N_bin weights are rates, so the denominator is the total accepted rate;
+    F₁ in Δ/F₁ cancels per bin, leaving only the shape and α_s factors.)
+
+    Parameters
+    ----------
+    cfg      : BeamConfig
+    nf2_obj  : NuclearF2FromGrid  pre-constructed EPPS21 object
+    base     : PartonF2           CT18NLO backend (for α_s)
+    variant  : str                shape variant ('low_x', 'mid_x', 'high_x')
+
+    Returns
+    -------
+    float : K such that rate-weighted <Δ/F₁> = K * s
+    """
+    sc   = fom.Scenario(lumi_fb_per_nucleon=1.0, pol_ion_tensor=PZZ, q2_min=2.0)
+    proj = fom.project_rates(cfg, sc, nuclear_f2=nf2_obj)
+
+    n_events = proj.n_events   # shape (nx, nq2)
+    accepted = proj.accepted & (proj.n_events >= MIN_EVENTS)
+
+    n_acc  = n_events[accepted]
+    x_acc  = proj.x[accepted]
+    q2_acc = proj.q2[accepted]
+
+    total_n = n_acc.sum()
+    if total_n <= 0:
+        return np.nan
+
+    alpha_v, beta_v = _VARIANTS[variant]
+    as_acc = alpha_s(q2_acc, base=base)
+    shape_acc = (
+        as_acc
+        * np.power(np.maximum(x_acc, 1e-12), alpha_v)
+        * np.power(np.maximum(1.0 - x_acc, 0.0), beta_v)
+        / _PEAK_VALS[variant]
+    )
+
+    K = float((n_acc * shape_acc).sum() / total_n)
+    return K
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # Main
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -1225,6 +1332,39 @@ def main():
                 f"{A_bag:>12.4e} {A_lat:>12.4e} "
                 f"{abs(A_bag):>12.4e} {abs(A_lat):>12.4e}"
             )
+    print()
+
+    # ── K conversion factors: <Δ/F₁>_A = K * s ───────────────────────────────
+    print("=" * 72)
+    print("K conversion factors: <Δ/F₁>_A  =  K * s   (rate-weighted, accepted bins)")
+    print("=" * 72)
+    header_k = (
+        f"{'Config':<8} {'Variant':<12} {'K':>12} "
+        f"{'<Δ/F₁> @ s0^bag':>18} {'<Δ/F₁> @ s0^lat':>18}"
+    )
+    print(header_k)
+    print("-" * 72)
+
+    k_vals = {}   # (config_tag, variant) → float
+
+    with r_override(r1998):
+        for cfg, cfg_tag, _ in all_configs:
+            nf2_obj = NuclearF2FromGrid(cfg.ion, EPPS21_SET)
+            for variant in VARIANT_NAMES:
+                K = compute_K_factor(cfg, nf2_obj, base, variant)
+                k_vals[(cfg_tag, variant)] = K
+                a_bag_k = a_vals.get((cfg_tag, variant, "bag"), np.nan)
+                a_lat_k = a_vals.get((cfg_tag, variant, "lat"), np.nan)
+                df1_bag = K * abs(a_bag_k) if np.isfinite(K) and np.isfinite(a_bag_k) else np.nan
+                df1_lat = K * abs(a_lat_k) if np.isfinite(K) and np.isfinite(a_lat_k) else np.nan
+                print(
+                    f"  {cfg_tag:<6} {variant:<12} {K:>12.3e} "
+                    f"{df1_bag:>18.3e} {df1_lat:>18.3e}"
+                )
+
+    print()
+    print("Note: on Plots 1-4, x-axis is raw scale s (universal across all curves).")
+    print("      For physical interpretation, multiply s by K to get rate-weighted <Δ/F₁>.")
     print()
 
     # ── Step 2: Compute sig² per fb⁻¹ at S0 for each (config, variant) ───────

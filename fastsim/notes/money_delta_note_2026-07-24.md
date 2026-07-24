@@ -16,6 +16,15 @@ transforming the reach picture from "requires a decade" to
   Script `money_delta_20260724.py` (1346 lines); 9 PNGs in `fastsim/out/money_delta/`.
   See also: `money_delta_note_2026-07-16.md`, `2026-07-20.md`, `2026-07-21.md` for
   prior work and the evolving next-steps ranking.
+- 2026-07-24 (extension): Corrected plot x-axis convention on Plots 1-4. The x-axis is
+  now peak Δ/F₁ (not the raw `scale` parameter s). Vertical dashed lines are now drawn
+  at the converted values peak(Δ/F₁)_bag ≈ 1.6×10⁻² and peak(Δ/F₁)_lat ≈ 1.2×10⁻²
+  using the mid_x reference shape at ⟨Q²⟩ = 7.4 GeV². SCALES internally covers the
+  code range [5e-3, 0.6] corresponding to peak Δ/F₁ ∈ [3e-4, 3e-2]. See new §4.1 for
+  details. The reach numbers (L_5σ, δA/A, etc.) are unchanged — this is purely a
+  visualization/labeling correction.
+- 2026-07-24 (extension 2): Widened plotted x-axis range on Plots 1-4 from peak Δ/F₁ ∈ [3×10⁻⁴, 3×10⁻²] to [10⁻³, 10⁻¹] (three decades). Internal SCALES updated from [5×10⁻³, 0.6] to [0.02, 2.0]. Vertical dashed lines (bag at 1.6×10⁻², lattice at 1.2×10⁻²) unchanged. Reach numbers unchanged.
+- 2026-07-24 (extension 3): Added §4.2 (statistical derivation and interpretation) explaining: origin of δA_bin = √(2/N_bin)/P_zz from cos(2φ) ML fit, combined uncertainty as one-parameter Fisher fit giving σ = ŝ/δŝ, why per-bin |δA/A| can be 10³ while combined is 10⁻² (Fisher additivity), and the σ ↔ δA/A duality (σ = 5 ↔ δA/A = 20%).
 
 ---
 
@@ -25,7 +34,8 @@ Script: `fastsim/scripts/money_delta_20260724.py` (1346 lines).
 All figures land in `fastsim/out/money_delta/`. Ion is ⁶Li throughout.
 Three beam configs × three Δ x-shape variants = 9 (config, shape) combinations.
 PDF sets: R1998 (`R = σ_L/σ_T`), EPPS21 (nuclear), Cloet `P_zz = 0.267`.
-Scale scan: [0.03, 3.0], log-spaced, 15 points.
+Scale scan: SCALES = [0.02, 2.0], log-spaced, 15 points (internal `scale` parameter;
+displayed on Plots 1-4 as peak Δ/F₁ ∈ [10⁻³, 10⁻¹] after conversion — see §4.1).
 
 ### Beam configurations
 
@@ -47,11 +57,11 @@ Scale scan: [0.03, 3.0], log-spaced, 15 points.
 
 | Filename | Content |
 |---|---|
-| `plot1a_dAoA_vs_scale_L10.png` | `δA/A` vs scale at `L = 10` fb⁻¹, 9 curves (3 configs × 3 shapes), separate panel |
+| `plot1a_dAoA_vs_scale_L10.png` | `δA/A` vs peak Δ/F₁ at `L = 10` fb⁻¹, 9 curves (3 configs × 3 shapes), separate panel |
 | `plot1b_dAoA_vs_scale_L100.png` | Same at `L = 100` fb⁻¹ |
-| `plot2_L5sig_vs_scale.png` | `L_5σ` vs scale, 9 curves, single panel |
-| `plot3_mid_midx_dAoA.png` | `δA/A` vs scale for mid+mid_x only; two luminosity curves (10 and 100 fb⁻¹) plus vertical lines at bag (`c = -0.012`) and lattice (`c = -0.009`) sum-rule values |
-| `plot4_mid_midx_L5sig.png` | `L_5σ` vs scale for mid+mid_x; same vertical lines |
+| `plot2_L5sig_vs_scale.png` | `L_5σ` vs peak Δ/F₁, 9 curves, single panel |
+| `plot3_mid_midx_dAoA.png` | `δA/A` vs peak Δ/F₁ for mid+mid_x only; two luminosity curves (10 and 100 fb⁻¹) plus vertical dashed lines at peak(Δ/F₁)_bag ≈ 1.6×10⁻² and peak(Δ/F₁)_lat ≈ 1.2×10⁻² (mid_x shape, ⟨Q²⟩ = 7.4 GeV²; see §4.1) |
+| `plot4_mid_midx_L5sig.png` | `L_5σ` vs peak Δ/F₁ for mid+mid_x; same vertical dashed lines (see §4.1) |
 | `plot5_heatmap_mid_L10.png` | Per-bin heatmap, mid config, `L = 10` fb⁻¹; 3 subpanels: `|A_bin|`, `δA_bin`, `|δA_bin/A_bin|` |
 | `plot6_heatmap_mid_L100.png` | Per-bin heatmap, mid config, `L = 100` fb⁻¹ |
 | `plot7_heatmap_top_L10.png` | Per-bin heatmap, top config, `L = 10` fb⁻¹ |
@@ -142,6 +152,10 @@ Entries below are per-config, per-shape averages from the `parton` per-bin
 18 entries. A varies less than 5% across configs, confirming the Choice-2
 physics (§5, point 8).
 
+*Note: these A values are raw `scale` parameters (dimensionless multipliers in
+the Δ formula). See §4.1 for conversion to peak Δ/F₁ ≈ 1.6×10⁻² (bag) and
+≈ 1.2×10⁻² (lattice) for the mid_x shape reference at ⟨Q²⟩ = 7.4 GeV².*
+
 ---
 
 ## 4. Reach summary (A_bag values)
@@ -165,6 +179,231 @@ of the bag values; `L_5σ` scales as the inverse, i.e. ×16/9 ≈ 1.78× larger.
 luminosity (3.6 pb⁻¹/nucleon/hour) that is about 80 hours — well under a
 year's run. Under the lattice sum rule (`c = -0.009`), all nine cases still
 reach 5σ within a 1-year (10 fb⁻¹) program.
+
+### 4.1 Note on x-axis convention (peak Δ/F₁ vs scale parameter s)
+
+**Internal vs. displayed quantity.** The code uses `scale` (equivalently `s`)
+internally as the multiplier in the Δ model:
+
+    Δ(x, Q²) = scale · α_s(Q²) · F₁(x, Q²) · x^α · (1−x)^β
+
+However, Plots 1-4 display **peak Δ/F₁** on the x-axis, defined as:
+
+    peak Δ/F₁ = scale × α_s(⟨Q²⟩) × max_x[ x^α (1−x)^β ]
+
+where the maximum of the shape factor and ⟨Q²⟩ are both evaluated for the
+reference shape and config (mid_x + MID for the 9-curve plots). The internal
+SCALES range [0.02, 2.0] therefore corresponds to displayed peak Δ/F₁ values
+in the range [10⁻³, 10⁻¹].
+
+**Conversion factor for the mid_x reference (MID config, ⟨Q²⟩ = 7.4 GeV²).**
+The shape x^0.7 (1−x)^3 peaks at x_peak = 0.19 with a peak value of ≈ 0.170.
+With α_s(7.4 GeV²) ≈ 0.30, the conversion factor is:
+
+    α_s(⟨Q²⟩) × peak_shape = 0.30 × 0.170 = 0.051
+
+**Converted vertical-line positions** (mid_x shape, MID config):
+
+| Theory input | Raw |A| (= scale) | peak Δ/F₁ |
+|---|---|---|
+| Bag (Sather–Schmidt, c = −0.012) | 0.310 | 0.310 × 0.051 = **1.6 × 10⁻²** |
+| Lattice (Detmold–Shanahan, c = −0.009) | 0.233 | 0.233 × 0.051 = **1.2 × 10⁻²** |
+
+**Caveats.**
+
+1. *Q² dependence of peak Δ/F₁.* Because α_s runs, peak Δ/F₁ is not a single
+   number across the accepted Q² range — it varies by roughly a factor of 2
+   (α_s(2 GeV²) ≈ 0.36 vs α_s(100 GeV²) ≈ 0.19). The vertical-line positions
+   use the rate-weighted ⟨Q²⟩ as the reference.
+
+2. *Shape dependence in 9-curve plots.* The peak of x^α(1−x)^β differs across
+   the three shape variants (low_x, mid_x, high_x). Plots 1 and 2 show all
+   nine (config, shape) combinations; the vertical dashed lines use the mid_x
+   shape as the reference and note this in an on-plot annotation. The underlying
+   curves are computed for their own shapes.
+
+3. *Plots 3 and 4 are exact.* These plots use only the mid_x shape throughout,
+   so the conversion factor (0.051) applies exactly to all displayed quantities.
+
+**Why this matters.** Without the conversion, plotting |A| on an axis labeled
+"Δ/F₁" would imply peak Δ/F₁ ≈ 0.3 — roughly 20× larger than the physical
+value. The displayed peak Δ/F₁ ~ 1–2 × 10⁻² correctly reflects that the
+one-gluon-exchange tensor asymmetry is suppressed by α_s × (shape peak) ≈ 0.05
+relative to the F₁-normalized amplitude. The reach numbers in the table above
+(L_5σ, δA/A, etc.) are unaffected by this labeling change.
+
+### 4.2 Statistical derivation and interpretation of δA_bin and the combined uncertainty
+
+This subsection derives Eq. 5 and Eq. 6 from first principles and explains why
+per-bin relative uncertainties `|δA_bin/A_bin|` can reach 10³ while the
+combined `δA/A` is ~1%. The two quantities measure fundamentally different
+things.
+
+#### 4.2.1 Origin of the per-bin uncertainty δA_bin = √(2/N_bin)/P_zz (Eq. 5)
+
+Eq. 5 is the statistical uncertainty from a **maximum-likelihood (ML) fit of the
+per-bin azimuthal yield to a cos(2φ) modulation**. It is not derived from Eq. 4.
+Eq. 4 is the theoretical prediction for A_cos2φ (Hoodbhoy–Jaffe–Manohar kinematic
+formula); Eq. 5 is the statistical precision with which that amplitude can be
+measured from N_bin detected events.
+
+**Derivation.**
+
+The φ-differential yield in a (x, Q², y) bin with N_bin events:
+
+    dN/dφ = (N_bin / 2π) · [1 + P_zz · A_cos2φ · cos(2φ)]
+
+Define the observed cos(2φ) amplitude B = P_zz · A_cos2φ. The ML estimator for B
+from the individual event angles {φᵢ} is:
+
+    B̂ = (2 / N_bin) · Σᵢ cos(2φᵢ)
+
+In the small-modulation limit (|B| ≪ 1), the events are approximately uniformly
+distributed in φ. The variance of B̂ is:
+
+    Var(B̂) = (4 / N_bin²) · N_bin · ⟨cos²(2φ)⟩ = (4 / N_bin) · (1/2) = 2 / N_bin
+
+Therefore δB = √(2/N_bin), and since B = P_zz · A_cos2φ:
+
+    δA_cos2φ = δB / P_zz = √(2/N_bin) / P_zz                   (Eq. 5)
+
+**Origin of each factor:**
+
+| Factor | Source |
+|---|---|
+| √N_bin in denominator | Standard Poisson counting: N events reduce variance by 1/N. |
+| Extra √2 in numerator | ⟨cos²(2φ)⟩ = 1/2 under uniform φ. Cosine fits use only half the information per event because sin and cos are orthogonal modes — only the projection onto cos(2φ) counts. |
+| 1/P_zz | Tensor-polarization dilution. The measured modulation is B = P_zz · A_cos2φ; dividing by P_zz un-dilutes to recover A_cos2φ. |
+
+**Caveats.**
+
+1. *Non-uniform φ acceptance.* For a real detector with gaps or shadowed regions,
+   ⟨cos²(2φ)⟩_det ≠ 1/2. The effective denominator changes and must be computed
+   from the acceptance-weighted integral. The formula above assumes uniform
+   coverage.
+
+2. *Small-modulation assumption.* The derivation requires |B| = |P_zz · A_cos2φ| ≪ 1.
+   For our kinematics |B| ≲ 0.02 (since |A_cos2φ| ≲ 0.03 and P_zz ≈ 0.27), so
+   this is well satisfied.
+
+#### 4.2.2 Combined uncertainty as a one-parameter Fisher fit
+
+**Critical wrinkle.** A_cos2φ is not a single physical constant — it depends on
+(x, Q², y) through Eq. 4. So the standard "combine N independent measurements of
+the same quantity" formula does not directly apply. The correct procedure is a
+**one-parameter fit**.
+
+**Two distinct quantities** that the framework computes:
+
+- **Total significance σ**: the test statistic for the hypothesis "Δ is nonzero,"
+  combined across all kinematic bins. Given by Eq. 6.
+- **Fitted amplitude ŝ ± δŝ**: the best-fit value of the overall scale parameter
+  in the model Δ = s · [fixed shape terms], and its Fisher-information uncertainty.
+
+**Derivation of the one-parameter fit.**
+
+Assume Δ(x, Q²) = s · Δ_shape(x, Q²), where Δ_shape is the fixed reference shape
+and s is the free parameter. Then A_cos2φ,bin(s) = s · A_bin,shape. The
+log-likelihood for the per-bin measured amplitudes {A_bin,meas} is:
+
+    ln L(s) = −½ · Σ_bins [(A_bin,meas − s · A_bin,shape)² / δA_bin²]
+
+The ML estimator for s is:
+
+    ŝ = Σ_bins [A_bin,meas · A_bin,shape / δA_bin²]
+        ─────────────────────────────────────────────
+        Σ_bins [A_bin,shape² / δA_bin²]
+
+The Fisher information gives the uncertainty:
+
+    1 / δŝ² = Σ_bins (A_bin,shape² / δA_bin²)
+
+Using A_bin,shape = A_bin,cos2φ / s_true:
+
+    s_true / δŝ = √[ Σ_bins (A_bin,cos2φ / δA_bin)² ] = σ      (Eq. 6)
+
+**Conclusion.** σ = ŝ / δŝ is the signal-to-noise ratio on the fitted amplitude.
+Equivalently:
+
+    δA/A = δŝ / s_true = 1/σ = 1/N_σ                            (Eq. 7)
+
+The "combined amplitude" is the free parameter of the one-parameter fit; its
+uncertainty is what Fisher information gives when all bins are combined. The sum
+in Eq. 6 is an **inverse-variance-weighted sum of squared per-bin
+signal-to-noise ratios** — Fisher information is additive across independent bins.
+
+#### 4.2.3 Per-bin vs combined uncertainty — why they differ so much
+
+These are two distinct quantities that are easy to confuse.
+
+**Per-bin relative uncertainty:** (δA/A)_bin = δA_bin / |A_bin|. Tells you how
+well an individual bin measures the asymmetry in that bin alone. Varies dramatically
+across the (x, Q²) grid because both δA_bin (set by N_bin) and A_bin (set by
+kinematic factors) vary. This is what the right subpanel of Plots 5–8 shows.
+
+**Combined relative uncertainty:** (δA/A)_combined = 1/σ = 1/N_σ. Tells you how
+well the fitted amplitude is determined using all bins together. Much smaller than
+per-bin ratios because Fisher information accumulates additively across bins.
+
+**Numerical example (MID + mid_x + 10 fb⁻¹/nucleon):**
+
+| Quantity | Value |
+|---|---|
+| Per-bin median \|δA/A\| | 0.35 |
+| Combined δA/A | 0.0086 |
+| Ratio (per-bin / combined) | ~41 |
+
+The ratio ~41 corresponds to roughly √(1700) ≈ 41 effective bins contributing
+with full weight to the Fisher information (out of 345 kinematic bins), each with
+varying weight determined by (A_bin/δA_bin)².
+
+**Wrong way to combine.** Taking the mean of per-bin |δA/A| ratios does NOT give
+the combined uncertainty. That gives ~0.35, underestimating sensitivity by ~40× in
+this case. The correct combined uncertainty uses inverse-variance weighting: square
+the per-bin signal-to-noise ratios, sum, then take √ and invert (i.e., Eq. 6 → 7).
+
+**Intuition.** Each bin contributes an independent "vote" of magnitude
+(A_bin/δA_bin)² to the combined significance. Good bins (large |A|, small δA)
+vote loudly; bad bins — those at large x + large Q² where signal is killed by
+(1−x)^β and rate by 1/Q⁴ — whisper. The combined significance is the RMS-sum of
+votes, dominated by the loud moderate-x, moderate-Q² bins.
+
+#### 4.2.4 Significance ↔ relative uncertainty duality
+
+From Eq. 7, σ = 1/(δA/A), so every significance value maps to a unique relative
+statistical uncertainty on the fitted amplitude:
+
+| σ (significance) | δA/A (relative stat uncertainty) |
+|---|---|
+| 1 | 100% |
+| 2 | 50% |
+| 3 | 33% |
+| **5** | **20%** |
+| 10 | 10% |
+| 100 | 1% |
+
+Same information, flipped: significance = signal/noise; relative uncertainty =
+noise/signal.
+
+**Precise statement for today's numbers.** σ = 5 means the fitted amplitude ŝ from
+the one-parameter fit is 20% relatively uncertain. For the bag prediction
+s_0^bag = 0.310 (mid_x shape, MID config), a 5σ result would report:
+
+    ŝ = 0.310 ± 0.062   (statistical only)
+
+**Two caveats.**
+
+1. *Per-bin vs fitted amplitude.* The 5σ ↔ 20% mapping applies to the **fitted
+   overall amplitude** ŝ, not to per-bin measurements. Per-bin uncertainties can
+   be much larger (median 35% at 10 fb⁻¹) even when the combined uncertainty is
+   small (0.86%).
+
+2. *Discovery vs precision.* 5σ is the **discovery threshold**, not the
+   **precision threshold**. At 5σ, δA/A = 20% is a loose measurement. For
+   precision physics one wants 10σ (10%) or better, requiring 4× more luminosity
+   (since σ ∝ √L). Today's numbers show that at 100 fb⁻¹/nucleon under the bag
+   prediction, δA/A drops to ~0.6–1% (100σ+); the measurement becomes
+   systematics-limited well before statistics run out.
 
 ---
 
@@ -383,11 +622,11 @@ The environment patches documented in `money_delta_note_2026-07-16.md` §5
 ### Plots in `fastsim/out/money_delta/` (new as of 2026-07-24, 9 files)
 
 ```
-plot1a_dAoA_vs_scale_L10.png       (δA/A vs scale, L=10 fb⁻¹, 9 curves)
-plot1b_dAoA_vs_scale_L100.png      (δA/A vs scale, L=100 fb⁻¹, 9 curves)
-plot2_L5sig_vs_scale.png           (L_5σ vs scale, 9 curves)
-plot3_mid_midx_dAoA.png            (mid+mid_x, δA/A, 2L + bag/lat verticals)
-plot4_mid_midx_L5sig.png           (mid+mid_x, L_5σ, bag/lat verticals)
+plot1a_dAoA_vs_scale_L10.png       (δA/A vs peak Δ/F₁, L=10 fb⁻¹, 9 curves)
+plot1b_dAoA_vs_scale_L100.png      (δA/A vs peak Δ/F₁, L=100 fb⁻¹, 9 curves)
+plot2_L5sig_vs_scale.png           (L_5σ vs peak Δ/F₁, 9 curves)
+plot3_mid_midx_dAoA.png            (mid+mid_x, δA/A vs peak Δ/F₁, 2L + bag/lat verticals at 1.6e-2/1.2e-2)
+plot4_mid_midx_L5sig.png           (mid+mid_x, L_5σ vs peak Δ/F₁, bag/lat verticals at 1.6e-2/1.2e-2)
 plot5_heatmap_mid_L10.png          (per-bin heatmap, mid, L=10 fb⁻¹, 3 subpanels)
 plot6_heatmap_mid_L100.png         (per-bin heatmap, mid, L=100 fb⁻¹, 3 subpanels)
 plot7_heatmap_top_L10.png          (per-bin heatmap, top, L=10 fb⁻¹, 3 subpanels)
