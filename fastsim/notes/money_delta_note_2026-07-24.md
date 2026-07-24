@@ -26,6 +26,7 @@ transforming the reach picture from "requires a decade" to
 - 2026-07-24 (extension 2): Widened plotted x-axis range on Plots 1-4 from peak Δ/F₁ ∈ [3×10⁻⁴, 3×10⁻²] to [10⁻³, 10⁻¹] (three decades). Internal SCALES updated from [5×10⁻³, 0.6] to [0.02, 2.0]. Vertical dashed lines (bag at 1.6×10⁻², lattice at 1.2×10⁻²) unchanged. Reach numbers unchanged.
 - 2026-07-24 (extension 3): Added §4.2 (statistical derivation and interpretation) explaining: origin of δA_bin = √(2/N_bin)/P_zz from cos(2φ) ML fit, combined uncertainty as one-parameter Fisher fit giving σ = ŝ/δŝ, why per-bin |δA/A| can be 10³ while combined is 10⁻² (Fisher additivity), and the σ ↔ δA/A duality (σ = 5 ↔ δA/A = 20%).
 - 2026-07-24 (extension 4): Added §4.2.5 (References) listing pedagogical sources for the statistical framework used in §4.2: Cowan's Statistical Data Analysis, PDG Statistics chapter, Poskanzer-Voloshin flow-methodology paper (source of √(2/N) cos-fit uncertainty), Voloshin-Zhang (non-uniform acceptance extension), HERMES b₁ analysis (direct experimental precedent for tensor DIS asymmetry), and Lyons on the 5σ convention.
+- 2026-07-24 (extension 5): Added Eq. (11) to §4 — the analytic rescaling formula σ²(s,L) = σ²_ref · (s/S₀)² · L that lets the plotting code compute δA/A at any (scale, luminosity) from a single reference sig² evaluation per (config, shape).
 
 ---
 
@@ -180,6 +181,29 @@ of the bag values; `L_5σ` scales as the inverse, i.e. ×16/9 ≈ 1.78× larger.
 luminosity (3.6 pb⁻¹/nucleon/hour) that is about 80 hours — well under a
 year's run. Under the lattice sum rule (`c = -0.009`), all nine cases still
 reach 5σ within a 1-year (10 fb⁻¹) program.
+
+### Analytic rescaling of δA/A across (scale, luminosity)
+
+Because A_cos2φ,bin scales linearly with s (through Δ ∝ s) and N_bin scales
+linearly with luminosity L, the combined significance-squared has a
+closed-form dependence on both variables. This lets the code compute σ²_ref
+once per (config, shape) at reference (s = S₀ = 10⁻³, L = 1 fb⁻¹/nucleon)
+and rescale analytically for every point on the plot — saving ~99% of the
+compute cost compared to re-evaluating per (s, L) combination.
+
+The scaling relation for the combined significance-squared is:
+
+    σ²(s, L) = σ²_ref · (s / S₀)² · L                                  (10a)
+
+where σ²_ref is computed once at reference values s = S₀ = 10⁻³ and
+L = 1 fb⁻¹/nucleon. The resulting fractional asymmetry uncertainty is:
+
+    δA/A (s, L) = 1 / √σ²(s, L)
+               = 1 / √[ σ²_ref · (s/S₀)² · L ]                         (11)
+
+This is what enables the plotting code to compute 9 curves × 15 scale
+points × 2 luminosities from a single σ² evaluation per (config, shape) —
+the analytic rescaling costs zero additional physics computation.
 
 ### 4.1 Note on x-axis convention (peak Δ/F₁ vs scale parameter s)
 
